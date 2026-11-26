@@ -1,0 +1,39 @@
+{
+  "brand": "社區活動報名",
+  "englishBrand": "Community Events",
+  "brandMark": "社",
+  "communityName": "○○社區",
+  "tagline": "社區生活，從參與開始。",
+  "description": "○○社區的活動資訊與線上報名。",
+  "theme": "ocean",
+  "themeColor": "",
+  "heroTitle": "一起參加社區活動",
+  "heroText": "找到適合的場次，和鄰居一起來參與。",
+  "links": [
+    {
+      "label": "社區網站",
+      "note": "查看社區資訊與最新內容",
+      "url": ""
+    },
+    {
+      "label": "LINE 社群",
+      "note": "加入社區討論區",
+      "url": ""
+    }
+  ],
+  "identities": [
+    "社區住戶",
+    "附近居民",
+    "其他"
+  ],
+  "about": {
+    "title": "關於我們",
+    "paragraphs": [
+      "我們是○○社區的活動團隊，定期舉辦講座、課程與交流活動。",
+      "歡迎鄰居報名參加，也歡迎提出想參加的活動主題。"
+    ],
+    "contact": ""
+  },
+  "emailSignoff": "社區活動團隊",
+  "feedbackOrganizer": "○○社區｜社區活動"
+}

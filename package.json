@@ -1,0 +1,45 @@
+{
+  "name": "community-events-template",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "test": "node --test tests/*.test.mjs",
+    "check": "node scripts/check.mjs",
+    "deploy": "wrangler deploy && wrangler d1 migrations apply DB --remote",
+    "db:local": "wrangler d1 migrations apply DB --local",
+    "db:migrate": "wrangler d1 migrations apply DB --remote"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "cloudflare": {
+    "bindings": {
+      "RATE_SALT": {
+        "description": "32 字以上的隨機文字，用來保護報名速率限制（必填）"
+      },
+      "FEEDBACK_TOKEN_SECRET": {
+        "description": "32 字以上的隨機文字，用來簽署課程回饋連結（必填）"
+      },
+      "ADMIN_BOOTSTRAP_EMAIL": {
+        "description": "第一位管理員的 Email；第一次登入後台時自動授予全部權限"
+      },
+      "RESEND_API_KEY": {
+        "description": "選填：要寄 Email 通知時填 Resend API Key"
+      },
+      "RESEND_WEBHOOK_SECRET": {
+        "description": "選填：Resend Webhook 簽章密鑰"
+      },
+      "DB": {
+        "description": "活動與報名資料庫（自動建立）"
+      },
+      "PHOTOS": {
+        "description": "活動照片與 Banner 圖片（自動建立）"
+      }
+    }
+  }
+}

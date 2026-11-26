@@ -1,0 +1,9 @@
+// Community-specific copy lives in site.config.json at the repository root; code reads it only through here.
+import raw from '../site.config.json' with {type:'json'};
+const str=(v,fallback)=>typeof v==='string'&&v.trim()?v.trim():fallback;
+const list=v=>Array.isArray(v)?v.filter(x=>typeof x==='string'&&x.trim()&&x.length<=50).map(x=>x.trim()):[];
+export const site={...raw,brand:str(raw.brand,'社區活動報名'),englishBrand:str(raw.englishBrand,'Community Events'),communityName:str(raw.communityName,'社區'),tagline:str(raw.tagline,''),emailSignoff:str(raw.emailSignoff,'活動團隊'),feedbackOrganizer:str(raw.feedbackOrganizer,str(raw.communityName,'社區活動')),identities:list(raw.identities).length?[...new Set(list(raw.identities))]:['社區住戶','附近居民','其他']};
+// Public subset for the browser (served at /site-config.json).
+export const publicSite=()=>({brand:site.brand,englishBrand:site.englishBrand,brandMark:str(raw.brandMark,site.brand.slice(0,1)),themeColor:/^#[0-9a-f]{6}$/i.test(raw.themeColor||'')?raw.themeColor:'',communityName:site.communityName,tagline:site.tagline,description:str(raw.description,''),heroTitle:str(raw.heroTitle,''),heroText:str(raw.heroText,''),links:Array.isArray(raw.links)?raw.links.filter(l=>l&&typeof l.label==='string'&&typeof l.url==='string'&&/^https?:\/\//.test(l.url)).map(l=>({label:l.label,note:typeof l.note==='string'?l.note:'',url:l.url})):[],identities:site.identities,about:raw.about&&typeof raw.about==='object'?{title:str(raw.about.title,'關於我們'),paragraphs:list(raw.about.paragraphs).length?raw.about.paragraphs.filter(p=>typeof p==='string'):[],contact:str(raw.about.contact,'')}:{title:'關於我們',paragraphs:[],contact:''},feedbackOrganizer:site.feedbackOrganizer});
+// Site URL for links in emails; falls back to the request origin when SITE_URL is not set (workers.dev deploys).
+export const siteURL=(env,origin='')=>String(env?.SITE_URL||origin||'').replace(/\/$/,'');

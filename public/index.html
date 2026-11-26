@@ -1,0 +1,46 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="社區活動資訊與線上報名。"><meta name="theme-color" content="#074a98"><title>社區活動報名</title><link rel="icon" href="/favicon.svg"><link rel="icon" href="/favicon.ico" sizes="any"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest"><link rel="stylesheet" href="/styles.css"><script type="module" src="/app.js"></script></head><body>
+<header class="site-header"><a href="/" class="brand"><span class="brand-mark" aria-hidden="true" data-site="brandMark">社</span><span><span data-site="englishBrand">Community Events</span><small data-site="brand">社區活動報名</small></span></a><button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav"><svg aria-hidden="true" viewBox="0 0 20 20" width="20" height="20"><path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>選單</button><nav id="site-nav" aria-label="主要選單"><a href="#activities">社區活動</a><a href="/safety.html">防詐知識</a><a href="/about.html">關於我們</a><a class="admin-link" href="/admin/">管理登入 ↗</a></nav></header>
+<main id="main">
+<section class="campaign-hero" aria-roledescription="輪播" aria-label="精選活動" tabindex="0">
+  <div id="hero-slides">
+  <div class="hero-slide hero-text-slide is-active" data-hero-slide="0" data-hero-title="歡迎" aria-hidden="false">
+    <div class="hero-text"><p class="eyebrow" data-site="englishBrand">COMMUNITY EVENTS</p><h1 data-site="brand">社區活動報名</h1><p class="hero-copy" data-site="tagline">社區生活，從參與開始。</p><a class="button" href="#activities">查看近期活動 <span aria-hidden="true">↓</span></a></div>
+  </div>
+  </div>
+  <div class="hero-carousel-controls" aria-label="主視覺控制" hidden>
+    <button class="hero-arrow hero-prev" type="button" aria-label="上一張主視覺">‹</button>
+    <div class="hero-dots" role="group" aria-label="選擇主視覺"></div>
+    <button class="hero-arrow hero-next" type="button" aria-label="下一張主視覺">›</button>
+    <button class="hero-play-toggle" type="button" aria-pressed="false"><span aria-hidden="true">Ⅱ</span><span>暫停輪播</span></button>
+  </div>
+  <p class="sr-only hero-announcement" aria-live="polite"></p>
+</section>
+<section id="activities" class="section activities-section"><div class="section-heading"><div><p class="eyebrow">COMMUNITY EVENTS</p><h2 data-site="heroTitle">一起參加社區活動</h2></div><p data-site="heroText">找到適合的場次，和鄰居一起來參與。</p></div><div id="events" aria-live="polite"><p class="loading">正在載入活動…</p></div></section>
+</main>
+<footer><a class="brand" href="/"><span data-site="englishBrand">Community Events</span> <small data-site="brand">社區活動報名</small></a><p data-site="tagline">社區生活，從參與開始。</p><a href="/safety.html">防詐知識</a><a href="/about.html">關於我們</a><a href="/admin/">管理後台</a><button type="button" id="analytics-settings" class="text-link">分析偏好設定</button></footer>
+<aside class="community-mascot" aria-label="網站導覽小幫手">
+  <section class="mascot-panel" id="mascot-panel" aria-labelledby="mascot-panel-title" hidden>
+    <button class="mascot-close" type="button" aria-label="關閉網站導覽">×</button>
+    <span class="mascot-kicker">YOUR DIGITAL NEIGHBOR</span>
+    <h2 id="mascot-panel-title">嗨，我來幫你帶路！</h2>
+    <p>要報名活動、看防詐重點，或找社區連結，都可以從這裡開始。</p>
+    <div class="mascot-shortcuts" aria-label="網站快捷操作">
+      <button class="mascot-action registration" id="mascot-register" type="button" disabled aria-busy="true">
+        <span class="mascot-link-icon" aria-hidden="true">✓</span><span><strong>立即報名</strong><small id="mascot-register-note">正在載入活動…</small></span><b aria-hidden="true">→</b>
+      </button>
+      <div class="mascot-mini-actions">
+        <a href="/safety.html"><span aria-hidden="true">盾</span>防詐三招</a>
+        <button type="button" id="mascot-top"><span aria-hidden="true">↑</span>回到頁首</button>
+      </div>
+    </div>
+    <div data-site-links hidden><span class="mascot-divider">社區連結</span><div data-site-links-list></div></div>
+  </section>
+  <button class="mascot-toggle" id="mascot-toggle" type="button" aria-expanded="false" aria-controls="mascot-panel">
+    <span class="mascot-art" aria-hidden="true">
+      <img src="/assets/neighbor-mascot-sign.png" alt="" width="1536" height="1024">
+    </span>
+    <span class="mascot-label" aria-hidden="true">社區小幫手</span>
+    <span class="sr-only">開啟活動報名、網站導覽與社區連結</span>
+  </button>
+</aside>
+<aside id="analytics-preferences" class="analytics-preferences" aria-labelledby="analytics-title" hidden><div class="analytics-copy"><h2 id="analytics-title">網站分析偏好</h2><p class="analytics-summary">允許以 Google 分析與 Cookie 了解網站使用情形嗎？拒絕不影響瀏覽與報名。</p><details><summary>詳細說明</summary><p>我們使用 Google Analytics 了解活動瀏覽、報名流程與內容互動，協助改善網站。允許後才會載入 Google 分析並使用 Cookie，選擇保留 180 天。不傳送姓名、聯絡資料或報名答案。拒絕不影響瀏覽與報名，您可隨時從頁尾變更選擇。</p></details></div><div class="analytics-actions"><button type="button" class="button" data-consent="granted">允許分析</button><button type="button" class="button secondary" data-consent="denied">拒絕非必要分析</button></div></aside><dialog id="registration-dialog" aria-labelledby="registration-title"><div class="dialog-header"><span class="eyebrow">JOIN YOUR NEIGHBORS</span><button class="icon-button close-dialog" aria-label="關閉報名視窗">×</button></div><div id="registration-content"></div></dialog><dialog id="photo-dialog"><button class="icon-button close-dialog" aria-label="關閉照片">×</button><img id="large-photo" alt=""><p id="photo-caption"></p></dialog><div id="toast" role="status"></div></body></html>

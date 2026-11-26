@@ -1,0 +1,9 @@
+node_modules/
+.pnpm-store/
+.wrangler/
+.local/
+.dev.vars
+.DS_Store
+*.log
+*.sqlite*
+coverage/

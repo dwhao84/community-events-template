@@ -1,0 +1,36 @@
+:root{--ink:#111;--line:#000;--muted:#555;--page:#eef1ef}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font-family:"Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif;line-height:1.5}
+main{padding:16px}
+.sheet-tools{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;max-width:210mm;margin:0 auto 16px;font-size:15px}
+.sheet-tools input{width:5em;min-height:44px;padding:6px 10px;font:inherit;border:1px solid #9aa;border-radius:6px}
+.sheet-tools button{min-height:44px;padding:8px 18px;font:inherit;font-weight:600;color:#fff;background:#153f36;border:0;border-radius:8px;cursor:pointer}
+.sheet-tools button:focus-visible,.sheet-tools input:focus-visible{outline:3px solid #c9a76b;outline-offset:2px}
+.sheet-tools p{flex-basis:100%;margin:0;color:var(--muted);font-size:14px}
+.sheet-scroll{overflow-x:auto}
+.sheet{width:210mm;min-height:120mm;margin:0 auto;padding:12mm;background:#fff}
+.version{margin:0;text-align:right;font-size:14px}
+.sheet h1{margin:4mm 0 5mm;text-align:center;font-size:22px;letter-spacing:.04em;overflow-wrap:anywhere}
+.meta{margin:0 0 3mm 18mm;font-size:15px;overflow-wrap:anywhere}
+.sheet table{width:100%;margin-top:4mm;border-collapse:collapse;table-layout:fixed;font-size:14px}
+.sheet th,.sheet td{border:1px solid var(--line);padding:2mm 1.5mm;text-align:center;vertical-align:middle}
+.sheet th{font-weight:400;font-size:15px}
+.sheet tbody{break-inside:avoid;page-break-inside:avoid}
+.c-num{width:6%}.c-name{width:21%}.c-age,.c-gender{width:7.5%}.c-identity{width:23%}.c-fee{width:20%}
+.sheet .name{font-size:16px;overflow-wrap:anywhere}
+.sheet .identity,.sheet .fee{text-align:left;line-height:1.9}
+.choice{display:block;white-space:nowrap}
+.blank{display:inline-block;min-width:3em;border-bottom:1px solid var(--line);text-align:center}
+@page{size:A4 portrait;margin:10mm}
+@media print{
+ body{background:#fff}
+ main{padding:0}
+ .sheet-tools{display:none}
+ .sheet-scroll{overflow:visible}
+ .sheet{width:auto;min-height:0;padding:0}
+}
+
+.printed-signature{display:block;width:100%;height:auto;margin-top:2mm}
+.sheet tbody{height:42mm}
+/* Ticked gender cells (e.g. ☑其他) stay on one line in the narrow columns. */
+.sheet td.g{white-space:nowrap;padding-left:.5mm;padding-right:.5mm}

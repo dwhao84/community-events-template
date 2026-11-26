@@ -1,0 +1,15 @@
+# Secrets. The Deploy to Cloudflare button asks for these; for local development copy this file to .dev.vars.
+# Random string used to hash rate-limit keys (required in production; registration returns 503 without it).
+RATE_SALT=replace-with-a-long-random-string
+# At least 32 characters; signs one-time course feedback links.
+FEEDBACK_TOKEN_SECRET=replace-with-at-least-32-random-characters
+# The first organizer's email. While no admin exists, this Cloudflare Access user becomes the first admin.
+ADMIN_BOOTSTRAP_EMAIL=organizer@example.com
+# Optional: only needed when MAIL_MODE=resend.
+RESEND_API_KEY=
+RESEND_WEBHOOK_SECRET=
+
+# Local development only (keep these out of production secrets).
+# APP_ENV=development
+# SITE_URL=http://localhost:8787
+# LOCAL_ADMIN_TOKEN=replace-with-a-long-random-local-only-token
