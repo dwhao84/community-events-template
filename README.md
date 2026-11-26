@@ -29,7 +29,9 @@
 
 ## 網站配色
 
-內建 10 組配色，主辦方可以在後台「網站外觀」隨時切換，也可以自訂五個顏色。標題、按鈕、標籤與卡片底色都會一起改變；所有預設配色都通過文字對比檢查（按鈕與標題 4.5:1、內文 7:1 以上）。下面是各配色的活動列表畫面：
+內建 10 組配色，主辦方可以在後台「網站外觀」隨時切換，也可以自訂五個顏色。標題、按鈕、標籤與卡片底色都會一起改變；所有預設配色都通過文字對比檢查（按鈕與標題 4.5:1、內文 7:1 以上）。下面是各配色的活動列表畫面。
+
+### 電腦版
 
 <table>
 <tr>
@@ -54,9 +56,28 @@
 </tr>
 </table>
 
+### 手機版
+
+<table>
+<tr>
+<td align="center" width="20%"><img src="docs/images/themes/mobile/ocean.jpg" alt="海洋藍配色的手機版活動列表畫面" width="160"><br><b>海洋藍</b></td>
+<td align="center" width="20%"><img src="docs/images/themes/mobile/forest.jpg" alt="森林綠配色的手機版活動列表畫面" width="160"><br><b>森林綠</b></td>
+<td align="center" width="20%"><img src="docs/images/themes/mobile/teal.jpg" alt="湖水青配色的手機版活動列表畫面" width="160"><br><b>湖水青</b></td>
+<td align="center" width="20%"><img src="docs/images/themes/mobile/sunset.jpg" alt="暖陽橘配色的手機版活動列表畫面" width="160"><br><b>暖陽橘</b></td>
+<td align="center" width="20%"><img src="docs/images/themes/mobile/sakura.jpg" alt="櫻花粉配色的手機版活動列表畫面" width="160"><br><b>櫻花粉</b></td>
+</tr>
+<tr>
+<td align="center" width="20%"><img src="docs/images/themes/mobile/lavender.jpg" alt="薰衣草紫配色的手機版活動列表畫面" width="160"><br><b>薰衣草紫</b></td>
+<td align="center" width="20%"><img src="docs/images/themes/mobile/brick.jpg" alt="磚紅配色的手機版活動列表畫面" width="160"><br><b>磚紅</b></td>
+<td align="center" width="20%"><img src="docs/images/themes/mobile/earth.jpg" alt="大地棕配色的手機版活動列表畫面" width="160"><br><b>大地棕</b></td>
+<td align="center" width="20%"><img src="docs/images/themes/mobile/night.jpg" alt="夜空藍配色的手機版活動列表畫面" width="160"><br><b>夜空藍</b></td>
+<td align="center" width="20%"><img src="docs/images/themes/mobile/graphite.jpg" alt="沉穩灰配色的手機版活動列表畫面" width="160"><br><b>沉穩灰</b></td>
+</tr>
+</table>
+
 - 開站前想先指定預設配色：把 `site.config.json` 的 `theme` 改成上表的英文代號（例如 `"theme": "forest"`）。在後台存過配色之後，以後台的設定為準。
 - 首頁主視覺與 Banner 是圖片，不會跟著配色改變。
-- 截圖使用本機的示範資料。
+- 截圖使用本機的示範資料。手機版截圖寬度為 390px，並隱藏了右下角的「社區小幫手」按鈕，以免擋住畫面。
 
 ## 開始使用
 
