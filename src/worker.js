@@ -7,6 +7,7 @@ import {feedbackPublic} from './feedback.js';
 import {publicSite} from './site.js';
 import {calendarFile,publicAbout,siteImageMedia} from './admin-tools.js';
 import {siteAppearanceCSS,siteIcon} from './admin-tools.js';
+import {turnstileSiteKey,turnstileOrigin} from './turnstile.js';
 const iconPaths=['/favicon.ico','/favicon.svg','/favicon-192.png','/favicon-512.png','/apple-touch-icon.png'];
 const headers={
  'X-Content-Type-Options':'nosniff','Referrer-Policy':'strict-origin-when-cross-origin',
@@ -15,6 +16,8 @@ const headers={
  // Start with one day and no subdomains; raise max-age once production HTTPS is confirmed stable.
  'Strict-Transport-Security':'max-age=86400'
 };
+// The home page (registration form) may load GA4 after consent and, when configured, the Turnstile widget; other pages keep 'self'.
+export function homeCSP(env){const ts=turnstileSiteKey(env)?' '+turnstileOrigin:'';return headers['Content-Security-Policy'].replace("script-src 'self'",`script-src 'self' https://www.googletagmanager.com${ts}`).replace("connect-src 'self'","connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com")+(ts?`; frame-src${ts}`:'');}
 function response(data,status=200){return data instanceof Response?data:Response.json(data,{status});}
 // Feedback links carry a one-time token: never leak it via Referer, caches or search indexes.
 function private_(r){r.headers.set('Referrer-Policy','no-referrer');r.headers.set('Cache-Control','no-store');r.headers.set('X-Robots-Tag','noindex');return r;}
@@ -69,7 +72,7 @@ export async function handle(req,env) {
   if((p[0]==='feedback'||p[0]==='feedback.html')&&p.length<=3&&method==='GET')return private_(secure(await env.ASSETS.fetch(new Request(new URL('/feedback',url),{headers:req.headers}))));
   if(method==='GET'&&url.pathname==='/admin/*'&&url.searchParams.get('__cf_access_message')==='logged_out')return secure(Response.redirect(new URL('/admin/',url),302));
   const asset=secure(await env.ASSETS.fetch(req));
-  if(url.pathname==='/'||url.pathname==='/index.html')asset.headers.set('Content-Security-Policy',headers['Content-Security-Policy'].replace("script-src 'self'","script-src 'self' https://www.googletagmanager.com").replace("connect-src 'self'","connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com"));
+  if(url.pathname==='/'||url.pathname==='/index.html')asset.headers.set('Content-Security-Policy',homeCSP(env));
   return asset;
  }catch(error){
   let status=error.status||500,message=error.message;

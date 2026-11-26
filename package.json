@@ -28,6 +28,9 @@
       "ADMIN_BOOTSTRAP_EMAIL": {
         "description": "第一位管理員的 Email；第一次登入後台時自動授予全部權限"
       },
+      "TURNSTILE_SECRET_KEY": {
+        "description": "強烈建議：Cloudflare Turnstile 的 Secret Key，防止機器人灌報名；須同時在 wrangler.jsonc 填 TURNSTILE_SITE_KEY"
+      },
       "RESEND_API_KEY": {
         "description": "選填：要寄 Email 通知時填 Resend API Key"
       },
