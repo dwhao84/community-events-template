@@ -107,7 +107,7 @@ npx wrangler secret put ADMIN_BOOTSTRAP_EMAIL   # 第一位管理員 Email
 2. **網站外觀**：選配色（或自訂五個顏色，對比不足無法儲存），上傳網站圖示。
 3. **關於我們頁面**：新增或調整區塊、排序、底色與對齊。
 4. **活動與場次 → 新增活動**：用精靈建立第一個活動（收費方式、名額、每筆人數上限）。
-5. **首頁 Banner**：上傳活動海報，填替代文字，連到活動。
+5. **首頁 Banner**：上傳活動海報（尺寸與製作方式見 `docs/costs-and-images.md`），填替代文字，連到活動。
 6. 用手機打開首頁看過一次；確認「加入行事曆」能下載。
 7. 檢查安全標頭：`curl -sI <SITE_URL> | grep -i content-security-policy` 應有輸出。
 

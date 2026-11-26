@@ -28,7 +28,7 @@ export function quickEventWizard(ctx){
   <div class="form-field wide"><label for="q-desc">活動說明</label><textarea id="q-desc" name="description" rows="4"></textarea></div>
   <div class="form-field wide"><label for="q-notes">注意事項（選填）</label><textarea id="q-notes" name="notes" rows="2"></textarea></div>
   <div class="form-field wide"><label for="q-contact">主辦方聯絡方式</label><input id="q-contact" name="contact" maxlength="500" required placeholder="Email、電話或 LINE 官方帳號"></div>
-  <div class="form-field wide"><label for="q-cover">活動封面（選填，JPG／PNG／WebP）</label><input id="q-cover" name="cover" type="file" accept="image/jpeg,image/png,image/webp"><p class="help">封面依原比例完整顯示，含文字的海報不會被裁切。</p></div>
+  <div class="form-field wide"><label for="q-cover">活動封面（選填，JPG／PNG／WebP）</label><input id="q-cover" name="cover" type="file" accept="image/jpeg,image/png,image/webp"><p class="help">建議 1600×900（16:9）。封面依原比例完整顯示，含文字的海報不會被裁切。</p></div>
  </div></fieldset>
  <fieldset><legend>2. 第一個場次</legend><div class="form-grid">
   <div class="form-field"><label for="q-start">開始時間（台灣）</label><input id="q-start" type="datetime-local" name="starts" required></div>
@@ -133,7 +133,7 @@ export async function bannersPage(content,ctx){
 function bannerEditor(ctx,events,b,reload){
  const isNew=!b.id;
  ctx.openEditor(isNew?'新增 Banner':'編輯 Banner',`<form id="banner-form"><div class="form-grid">
-  <div class="form-field wide"><label for="b-file">圖片${isNew?'':'（選填，換一張圖）'}</label><input id="b-file" name="file" type="file" accept="image/jpeg,image/png,image/webp" ${isNew?'required':''}><p class="help">建議橫式 16:9 或 3:1；直式海報也會完整顯示。</p></div>
+  <div class="form-field wide"><label for="b-file">圖片${isNew?'':'（選填，換一張圖）'}</label><input id="b-file" name="file" type="file" accept="image/jpeg,image/png,image/webp" ${isNew?'required':''}><p class="help">建議 1920×640（3:1）或 1920×1080（16:9），JPG／WebP 1 MB 內。手機上圖會縮很小，標題字高至少 80px；直式海報也會完整顯示，但兩側會留白。</p></div>
   <div class="form-field wide"><label for="b-alt">圖片替代文字（必填）</label><input id="b-alt" name="alt" maxlength="300" required value="${esc(b.alt||'')}" placeholder="描述圖片內容，例如：夏日市集海報，7/20 下午兩點"></div>
   <div class="form-field"><label for="b-title">標題（選填）</label><input id="b-title" name="title" maxlength="200" value="${esc(b.title||'')}"></div>
   <div class="form-field"><label for="b-sub">副標（選填）</label><input id="b-sub" name="subtitle" maxlength="300" value="${esc(b.subtitle||'')}" placeholder="留空時自動顯示活動日期"></div>
@@ -163,7 +163,7 @@ export async function aboutEditor(content,ctx){
   if(b.type==='hero')body=field(i,'title','標題',b.title,{max:120})+field(i,'text','說明',b.text,{area:true,max:600});
   else if(b.type==='text'||b.type==='contact')body=field(i,'heading','標題（選填）',b.heading,{max:120})+field(i,'body',b.type==='contact'?'聯絡資訊':'內文（空一行分段）',b.body,{area:true,max:b.type==='contact'?1000:5000});
   else if(b.type==='cards')body=field(i,'heading','標題（選填）',b.heading,{max:120})+`<div class="form-field"><label for="ab-${i}-cols">每列卡片數（桌面）</label><select id="ab-${i}-cols" data-k="columns">${[2,3,4].map(n=>`<option value="${n}" ${b.columns===n?'selected':''}>${n} 張</option>`).join('')}</select></div>`+items(i,b,'cards');
-  else if(b.type==='image_text')body=field(i,'heading','標題（選填）',b.heading,{max:120})+field(i,'body','內文',b.body,{area:true,max:3000})+`<div class="form-field"><label for="ab-${i}-side">圖片位置</label><select id="ab-${i}-side" data-k="image_side"><option value="left" ${sel(b.image_side,'left')}>左邊</option><option value="right" ${sel(b.image_side,'right')}>右邊</option></select></div><div class="form-field wide"><label for="ab-${i}-img">圖片${b.image_id?'（已上傳，可更換）':''}</label>${b.image_id?`<img class="about-thumb" src="/media/${esc(b.image_id)}" alt="">`:''}<input id="ab-${i}-img" type="file" class="block-image" accept="image/jpeg,image/png,image/webp"></div>`+field(i,'alt','圖片說明（替代文字，必填）',b.alt,{max:300});
+  else if(b.type==='image_text')body=field(i,'heading','標題（選填）',b.heading,{max:120})+field(i,'body','內文',b.body,{area:true,max:3000})+`<div class="form-field"><label for="ab-${i}-side">圖片位置</label><select id="ab-${i}-side" data-k="image_side"><option value="left" ${sel(b.image_side,'left')}>左邊</option><option value="right" ${sel(b.image_side,'right')}>右邊</option></select></div><div class="form-field wide"><label for="ab-${i}-img">圖片${b.image_id?'（已上傳，可更換）':''}</label>${b.image_id?`<img class="about-thumb" src="/media/${esc(b.image_id)}" alt="">`:''}<input id="ab-${i}-img" type="file" class="block-image" accept="image/jpeg,image/png,image/webp"><p class="help">建議 1200×900（4:3）。</p></div>`+field(i,'alt','圖片說明（替代文字，必填）',b.alt,{max:300});
   else if(b.type==='links')body=field(i,'heading','標題（選填）',b.heading,{max:120})+items(i,b,'links');
   return `<section class="panel about-block-editor" data-i="${i}"><div class="toolbar"><h3>${i+1}. ${esc(blockTypes[b.type]||b.type)}</h3><div class="editor-actions"><button type="button" class="button secondary block-move" data-dir="-1" ${i?'':'disabled'} aria-label="上移第 ${i+1} 個區塊">↑</button><button type="button" class="button secondary block-move" data-dir="1" ${i<blocks.length-1?'':'disabled'} aria-label="下移第 ${i+1} 個區塊">↓</button><button type="button" class="button danger block-remove" aria-label="刪除第 ${i+1} 個區塊">刪除</button></div></div><div class="form-grid">${body}${common}</div></section>`;
  };
