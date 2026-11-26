@@ -36,6 +36,9 @@
 
 全部用免費方案就能運作，見下方「費用」。
 
+- 想自己一步步照著做：看 [`docs/setup-guide.md`](docs/setup-guide.md)（每一步的指令與預期結果）。
+- 想知道哪些事一定要自己動手（登入帳號、輸入秘密、後台設定）：看 [`docs/manual-handoffs.md`](docs/manual-handoffs.md)。
+
 ### 方法一：交給 AI 助理（建議）
 
 用 Claude Code、Codex 或 Gemini CLI 開啟這個資料夾：
