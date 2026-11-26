@@ -79,6 +79,40 @@
 - 首頁主視覺與 Banner 是圖片，不會跟著配色改變。
 - 截圖使用本機的示範資料。手機版截圖寬度為 390px，並隱藏了右下角的「社區小幫手」按鈕，以免擋住畫面。
 
+## 後台畫面
+
+主辦方在 `<你的網址>/admin/` 管理活動，用管理員 Email 收驗證碼登入。
+
+### 電腦版
+
+<table>
+<tr>
+<td width="50%" valign="top"><img src="docs/images/admin/events.jpg" alt="後台「活動與場次」畫面" width="400"><br><b>活動與場次</b><br>每個活動的場次、名額、已占用人數一目了然，可編輯、複製、隱藏或刪除。</td>
+<td width="50%" valign="top"><img src="docs/images/admin/wizard.jpg" alt="後台「新增活動精靈」畫面" width="400"><br><b>新增活動精靈</b><br>一次填好活動資料、第一個場次、收費與報名表，就能開放報名。</td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="docs/images/admin/registrations.jpg" alt="後台「報名名單」畫面" width="400"><br><b>報名名單</b><br>確認名額、改候補或取消；可代填電話或紙本報名，並匯出 CSV、輸出簽到單。</td>
+<td width="50%" valign="top"><img src="docs/images/admin/checkin.jpg" alt="後台「現場報到」畫面" width="400"><br><b>現場報到</b><br>用姓名、Email 或報名編號查找並報到，也能開放現場直接報名。</td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="docs/images/admin/stats.jpg" alt="後台「活動統計」畫面" width="400"><br><b>活動統計</b><br>報名、確認、候補與實際出席人次分開計算，可依年份篩選並匯出。</td>
+<td width="50%" valign="top"><img src="docs/images/admin/appearance.jpg" alt="後台「網站外觀」畫面" width="400"><br><b>網站外觀</b><br>選擇或自訂配色，即時預覽並檢查文字對比；也可上傳網站圖示。</td>
+</tr>
+</table>
+
+### 手機版
+
+活動當天可以直接用手機或平板報到、查名單。
+
+<table>
+<tr>
+<td align="center" width="50%"><img src="docs/images/admin/checkin-mobile.jpg" alt="手機版「現場報到」畫面" width="240"><br><b>現場報到</b></td>
+<td align="center" width="50%"><img src="docs/images/admin/registrations-mobile.jpg" alt="手機版「報名名單」畫面" width="240"><br><b>報名名單</b></td>
+</tr>
+</table>
+
+截圖使用虛構的示範資料（姓名虛構、信箱皆為 `example.com`）。
+
 ## 開始使用
 
 需要準備：
