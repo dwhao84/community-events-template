@@ -27,6 +27,37 @@
 - Email 通知（選用）：收件、確認、行前提醒、取消；課程回饋問卷。
 - 權限分模組：活動、報名、報到、照片、通知、匯出、回饋、管理員。
 
+## 網站配色
+
+內建 10 組配色，主辦方可以在後台「網站外觀」隨時切換，也可以自訂五個顏色。標題、按鈕、標籤與卡片底色都會一起改變；所有預設配色都通過文字對比檢查（按鈕與標題 4.5:1、內文 7:1 以上）。下面是各配色的活動列表畫面：
+
+<table>
+<tr>
+<td align="center" width="50%"><img src="docs/images/themes/ocean.jpg" alt="海洋藍配色的活動列表畫面" width="400"><br><b>海洋藍</b> <code>ocean</code>（預設）</td>
+<td align="center" width="50%"><img src="docs/images/themes/forest.jpg" alt="森林綠配色的活動列表畫面" width="400"><br><b>森林綠</b> <code>forest</code></td>
+</tr>
+<tr>
+<td align="center" width="50%"><img src="docs/images/themes/teal.jpg" alt="湖水青配色的活動列表畫面" width="400"><br><b>湖水青</b> <code>teal</code></td>
+<td align="center" width="50%"><img src="docs/images/themes/sunset.jpg" alt="暖陽橘配色的活動列表畫面" width="400"><br><b>暖陽橘</b> <code>sunset</code></td>
+</tr>
+<tr>
+<td align="center" width="50%"><img src="docs/images/themes/sakura.jpg" alt="櫻花粉配色的活動列表畫面" width="400"><br><b>櫻花粉</b> <code>sakura</code></td>
+<td align="center" width="50%"><img src="docs/images/themes/lavender.jpg" alt="薰衣草紫配色的活動列表畫面" width="400"><br><b>薰衣草紫</b> <code>lavender</code></td>
+</tr>
+<tr>
+<td align="center" width="50%"><img src="docs/images/themes/brick.jpg" alt="磚紅配色的活動列表畫面" width="400"><br><b>磚紅</b> <code>brick</code></td>
+<td align="center" width="50%"><img src="docs/images/themes/earth.jpg" alt="大地棕配色的活動列表畫面" width="400"><br><b>大地棕</b> <code>earth</code></td>
+</tr>
+<tr>
+<td align="center" width="50%"><img src="docs/images/themes/night.jpg" alt="夜空藍配色的活動列表畫面" width="400"><br><b>夜空藍</b> <code>night</code></td>
+<td align="center" width="50%"><img src="docs/images/themes/graphite.jpg" alt="沉穩灰配色的活動列表畫面" width="400"><br><b>沉穩灰</b> <code>graphite</code></td>
+</tr>
+</table>
+
+- 開站前想先指定預設配色：把 `site.config.json` 的 `theme` 改成上表的英文代號（例如 `"theme": "forest"`）。在後台存過配色之後，以後台的設定為準。
+- 首頁主視覺與 Banner 是圖片，不會跟著配色改變。
+- 截圖使用本機的示範資料。
+
 ## 開始使用
 
 需要準備：
