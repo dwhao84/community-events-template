@@ -6,6 +6,7 @@ import {validateTemplate,renderTemplate,payloadFor,processJobs} from './mail.js'
 import {feedbackAdmin} from './feedback.js';
 import {feedbackKinds} from './feedback-core.js';
 import {site} from './site.js';
+import {turnstileSiteKey,verifyTurnstile} from './turnstile.js';
 import {feeInput,seatLimitInput,quickEvent,duplicateEvent,setHidden,deleteEvent,restoreEvent,addRegistration,purgeRegistration,stats,statsCSV,uploadSiteImage,bannersAPI,publicBanners,aboutAPI,appearanceAPI} from './admin-tools.js';
 const requiredRow=async(db,table,id)=>{const row=await one(db,`SELECT * FROM ${table} WHERE id=?`,id);if(!row)fail(404,'找不到資料');return row;};
 const sessionQuery=`SELECT s.*,COALESCE(s.form_id,e.default_form_id) active_form_id,COALESCE((SELECT SUM(seats) FROM registrations r WHERE r.session_id=s.id AND r.status IN('pending','confirmed')),0) occupied,(SELECT COUNT(*) FROM registrations r WHERE r.session_id=s.id AND r.status='waitlisted') waitlisted FROM event_sessions s JOIN events e ON e.id=s.event_id`;
@@ -36,7 +37,7 @@ export function participantsInput(value,seats){
 export async function publicForm(env,id) {
  const s=await one(env.DB,sessionQuery+" WHERE s.id=? AND s.status='published' AND e.status='published' AND e.hidden=0 AND e.deleted_at IS NULL",id);if(!s)fail(404,'找不到場次');
  const form=await requiredRow(env.DB,'form_versions',s.active_form_id);if(form.status!=='published')fail(404,'表單尚未發布');
- const cfg=await settings(env.DB);return {session:s,form:{id:form.id,version:form.version,handwritten_name:true,participants:{max:participantRowLimit,age_groups:ageGroups,genders,identities},fields:JSON.parse(form.fields_json).map(f=>f.id==='name'?{...f,label:'請幫我填寫真實姓名',placeholder:'請填寫真實姓名'}:f.id==='participant_count'?{...f,max:Math.min(f.max??100000,s.max_seats_per_registration)}:f)},privacy:{version:cfg.privacy_version+':signin-fields-v1',summary:cfg.privacy_summary+' 您可手寫姓名，筆跡將用於報名核對及活動簽到表；每位參加者的姓名、大人／小孩、性別與身分用於製作活動簽到表。',body:cfg.privacy_body+'\n手寫姓名筆跡與報名資料一併保存，用於活動報名核對；實際到場後可帶入簽到表。亦可選擇鍵盤輸入姓名。\n每位參加者的姓名、大人／小孩、性別與身分（'+identities.join('、')+'）僅用於本場活動簽到表與名冊留存；性別、大人／小孩與身分可留空。',statement:cfg.participation_statement}};
+ const cfg=await settings(env.DB);return {turnstile_site_key:turnstileSiteKey(env),session:s,form:{id:form.id,version:form.version,handwritten_name:true,participants:{max:participantRowLimit,age_groups:ageGroups,genders,identities},fields:JSON.parse(form.fields_json).map(f=>f.id==='name'?{...f,label:'請幫我填寫真實姓名',placeholder:'請填寫真實姓名'}:f.id==='participant_count'?{...f,max:Math.min(f.max??100000,s.max_seats_per_registration)}:f)},privacy:{version:cfg.privacy_version+':signin-fields-v1',summary:cfg.privacy_summary+' 您可手寫姓名，筆跡將用於報名核對及活動簽到表；每位參加者的姓名、大人／小孩、性別與身分用於製作活動簽到表。',body:cfg.privacy_body+'\n手寫姓名筆跡與報名資料一併保存，用於活動報名核對；實際到場後可帶入簽到表。亦可選擇鍵盤輸入姓名。\n每位參加者的姓名、大人／小孩、性別與身分（'+identities.join('、')+'）僅用於本場活動簽到表與名冊留存；性別、大人／小孩與身分可留空。',statement:cfg.participation_statement}};
 }
 export async function register(req,env,id,b) {
  await rateLimit(req,env,'registration',12);
@@ -52,6 +53,9 @@ export async function register(req,env,id,b) {
  if(!Number.isInteger(seats)||seats<1||seats>100000)fail(400,'參加人數須為 1–100000 位');
  if(seats>s.max_seats_per_registration)fail(400,`每筆報名最多 ${s.max_seats_per_registration} 位，人數較多請分開報名或洽主辦方`,{participant_count:`每筆最多 ${s.max_seats_per_registration} 位`});
  const participants=participantsInput(b.participants,seats);
+ // A retried submission that already succeeded returns its result without a second (single-use) Turnstile token.
+ const retried=await one(env.DB,"SELECT code,status,seats FROM registrations WHERE session_id=? AND submission_id=? AND status<>'cancelled'",id,b.submission_id);if(retried)return retried;
+ await verifyTurnstile(req,env,b.turnstile_token);
  const existing=await one(env.DB,'SELECT * FROM registrations WHERE session_id=? AND normalized_email=?',id,email);
  if(existing && existing.status!=='cancelled') {
   if(existing.submission_id===b.submission_id)return {code:existing.code,status:existing.status,seats:existing.seats};

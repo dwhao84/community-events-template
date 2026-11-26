@@ -11,7 +11,7 @@ description: 把「社區活動報名模板」設定成某個社區自己的網�
 
 ## 必須遵守
 
-- **秘密不落地**：`RATE_SALT`、`FEEDBACK_TOKEN_SECRET`、`RESEND_API_KEY`、`RESEND_WEBHOOK_SECRET` 只能用 `wrangler secret put` 或 Deploy 按鈕的秘密欄位輸入，不得寫進任何會提交的檔案、不得印在回覆裡。`.dev.vars` 只放本機值，且已在 `.gitignore`。
+- **秘密不落地**：`RATE_SALT`、`FEEDBACK_TOKEN_SECRET`、`TURNSTILE_SECRET_KEY`、`RESEND_API_KEY`、`RESEND_WEBHOOK_SECRET` 只能用 `wrangler secret put` 或 Deploy 按鈕的秘密欄位輸入，不得寫進任何會提交的檔案、不得印在回覆裡。`.dev.vars` 只放本機值，且已在 `.gitignore`。
 - **對外動作先確認**：`wrangler deploy`、遠端 migration、建立 GitHub repo、`git push`、刪除任何雲端資源前，先向使用者說明會發生什麼並取得同意。
 - **不在正式站做測試報名**：功能測試在本機（`npm run dev`）進行。
 - **不改觸發器與 migration 來繞過限制**：新增欄位或規則一律新增編號接續的 migration。
@@ -94,6 +94,16 @@ npx wrangler secret put ADMIN_BOOTSTRAP_EMAIL   # 第一位管理員 Email
 
 7. 請使用者用管理員 Email 開 `/admin/`：因為 `ADMIN_BOOTSTRAP_EMAIL` 相符且還沒有任何管理員，系統會自動授予全部權限。之後可在「營運設定」新增其他管理員。
 
+### 報名防護：Cloudflare Turnstile（強烈建議，開放報名前完成）
+
+公開報名不需登入；沒有這項防護時，任何人都能用程式灌假報名佔滿名額，或借網站寄收件通知給陌生信箱。帶使用者在網頁上操作：
+
+1. Cloudflare 儀表板 → **Turnstile → Add widget**，主機名稱填網站網域（`SITE_URL` 的主機），Widget Mode 選 **Managed**。
+2. **Site Key** 是公開值，填入 `wrangler.jsonc` 的 `TURNSTILE_SITE_KEY`；**Secret Key** 用 `npx wrangler secret put TURNSTILE_SECRET_KEY` 輸入（不要顯示在回覆中）。
+3. 部署後打開報名表，確認送出按鈕上方出現驗證方框；`curl -sI <SITE_URL> | grep -i content-security-policy` 應包含 `challenges.cloudflare.com`。不要為了驗收送出正式報名。
+
+兩個值必須一起設定；只設一個時報名 API 回 503（刻意 fail closed）。使用者若選擇暫不設定，回報時列為「尚未完成的安全設定」。
+
 ### 7. Email 通知（選用）
 
 1. 在 Resend 新增並驗證寄件網域（依畫面加 DNS 紀錄）。
@@ -109,7 +119,8 @@ npx wrangler secret put ADMIN_BOOTSTRAP_EMAIL   # 第一位管理員 Email
 4. **活動與場次 → 新增活動**：用精靈建立第一個活動（收費方式、名額、每筆人數上限）。
 5. **首頁 Banner**：上傳活動海報（尺寸與製作方式見 `docs/costs-and-images.md`），填替代文字，連到活動。
 6. 用手機打開首頁看過一次；確認「加入行事曆」能下載。
-7. 檢查安全標頭：`curl -sI <SITE_URL> | grep -i content-security-policy` 應有輸出。
+7. 確認報名防護（Turnstile）已設定，或已告知使用者未設定的風險。
+8. 檢查安全標頭：`curl -sI <SITE_URL> | grep -i content-security-policy` 應有輸出。
 
 ### 9. 回報
 

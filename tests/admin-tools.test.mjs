@@ -65,6 +65,22 @@ test('每筆報名人數上限：表單顯示上限，API 與觸發器都拒絕�
  const ok=await resident(e,await residentBody(e,3));assert.equal(ok.status,'pending');
 });
 
+test('Turnstile 報名：缺 token 或驗證失敗不寫入、不寄信；同一提交重試不需第二個 token',async()=>{
+ const e=Object.assign(env(),{TURNSTILE_SITE_KEY:'1x00000000000000000000AA',TURNSTILE_SECRET_KEY:'1x0000000000000000000000000000000AA'}),original=globalThis.fetch,seen=[];
+ let verdict={success:true};globalThis.fetch=async(url,init)=>{seen.push(init.body.get('response'));return Response.json(verdict);};
+ try{
+  assert.equal((await publicForm(e,'s1')).turnstile_site_key,'1x00000000000000000000AA');
+  const body=await residentBody(e,1);
+  await rejects(resident(e,body),400,/真人/);assert.equal(seen.length,0,'缺 token 不呼叫 siteverify');
+  verdict={success:false};await rejects(resident(e,{...body,turnstile_token:'bad'}),400);
+  assert.equal(n(e,'SELECT COUNT(*) n FROM registrations'),0);assert.equal(n(e,'SELECT COUNT(*) n FROM email_jobs'),0);
+  verdict={success:true};const ok=await resident(e,{...body,turnstile_token:'good'});assert.equal(ok.status,'pending');
+  // Network retry of the same submission: the token is spent, the original result comes back without a new check.
+  verdict={success:false};assert.deepEqual({...await resident(e,{...body,turnstile_token:'good'})},{...ok});
+  assert.deepEqual(seen,['bad','good']);assert.equal(n(e,"SELECT COUNT(*) n FROM email_jobs WHERE kind='receipt'"),1);
+ }finally{globalThis.fetch=original;}
+});
+
 test('行事曆檔：UTC 時間、跳脫特殊字元、長行折疊、取消狀態；隱藏或刪除的活動回 404',async()=>{
  const ics=sessionICS({id:'s1',event_id:'ev',title:'講座；第一場, 歡迎',starts_at:START,ends_at:END,location:'活動中心, 2F',fee:'免費',status:'published',revision:1},{siteUrl:'https://events.example.org',host:'events.example.org',now:new Date(T0)});
  assert.match(ics,/DTSTART:20990501T060000Z\r\n/);assert.match(ics,/DTEND:20990501T080000Z/);assert.match(ics,/SUMMARY:講座\\；第一場\\, 歡迎|SUMMARY:講座；第一場\\, 歡迎/);

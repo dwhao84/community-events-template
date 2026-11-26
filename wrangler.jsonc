@@ -18,6 +18,8 @@
     "MAIL_REPLY_TO": "",
     "MAIL_CC": "",
     "GA4_MEASUREMENT_ID": "",
+    // Public Turnstile site key; pair it with the TURNSTILE_SECRET_KEY secret (see README).
+    "TURNSTILE_SITE_KEY": "",
     "ACCESS_TEAM_DOMAIN": "",
     "ACCESS_AUD": "",
     "MAX_PHOTO_BYTES": "8388608",

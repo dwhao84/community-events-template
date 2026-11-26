@@ -81,6 +81,20 @@ AI 會依 [`.agents/skills/community-setup/SKILL.md`](.agents/skills/community-s
 
 若 `workers.dev` 網址無法設定路徑型 Access，請改用交給 Cloudflare 管理的自訂網域。
 
+### 防止機器人灌報名：Cloudflare Turnstile（強烈建議）
+
+報名不需登入，如果不開這項防護，有人可以用程式大量送出假報名把名額佔滿，或借你的網站寄「報名收件通知」給陌生人。Turnstile 是 Cloudflare 的免費真人驗證，多數住戶只會看到一個自動打勾的小方框。
+
+1. Cloudflare 儀表板 → **Turnstile** → **Add widget**。
+   - 主機名稱填網站網域（例如 `events.example.org`；用 `workers.dev` 就填那個網址的網域）。
+   - Widget Mode 選 **Managed**。
+2. 複製兩個值：
+   - **Site Key**（公開）→ 填入 `wrangler.jsonc` 的 `TURNSTILE_SITE_KEY`。
+   - **Secret Key**（秘密）→ `npx wrangler secret put TURNSTILE_SECRET_KEY`。用 Deploy 按鈕部署的話，在 Worker 的 Settings → Variables and Secrets 新增。
+3. 重新部署後打開報名表，送出按鈕上方會出現驗證方框。
+
+兩個值要一起設定；只設一個時，報名會暫停並顯示「報名防護設定不完整」，避免以為有防護其實沒有。之後如果 Cloudflare 的驗證服務暫時連不上，報名也會請住戶稍後再試。
+
 ### 開站前，在後台完成
 
 1. **營運設定**：寫正式的個資告知，換新版本號，勾選「可允許場次開放報名」。
@@ -255,6 +269,7 @@ AI 繪圖常把中文字畫錯。建議讓 AI **只畫背景、不放字**，再
   1. `cp .dev.vars.example .dev.vars`，取消註解本機設定；
   2. `npm run db:local`；
   3. `npm run dev`。
+- 本機測試 Turnstile：在 `.dev.vars` 填入 Cloudflare 的測試金鑰（見 `.dev.vars.example`），報名表會出現一定通過的測試方框。測試金鑰在正式環境會被拒絕。
 - 檢查：`npm run check`（語法、單元測試、migration 與觸發器）。
 - 整合測試：開著 `npm run dev`，執行 `TEST_ADMIN_TOKEN=<權杖> node tests/integration.mjs`。
 - 部署：`npm run deploy`（`wrangler deploy` 後套用遠端 migration）。

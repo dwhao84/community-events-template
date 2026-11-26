@@ -5,6 +5,9 @@ RATE_SALT=replace-with-a-long-random-string
 FEEDBACK_TOKEN_SECRET=replace-with-at-least-32-random-characters
 # The first organizer's email. While no admin exists, this Cloudflare Access user becomes the first admin.
 ADMIN_BOOTSTRAP_EMAIL=organizer@example.com
+# Strongly recommended in production: Cloudflare Turnstile secret key (set TURNSTILE_SITE_KEY in wrangler.jsonc too).
+# Leave both unset to run without the bot check.
+# TURNSTILE_SECRET_KEY=
 # Optional: only needed when MAIL_MODE=resend.
 RESEND_API_KEY=
 RESEND_WEBHOOK_SECRET=
@@ -13,3 +16,6 @@ RESEND_WEBHOOK_SECRET=
 # APP_ENV=development
 # SITE_URL=http://localhost:8787
 # LOCAL_ADMIN_TOKEN=replace-with-a-long-random-local-only-token
+# Local Turnstile test (Cloudflare's public test keys; always pass, rejected in production):
+# TURNSTILE_SITE_KEY=1x00000000000000000000AA
+# TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
