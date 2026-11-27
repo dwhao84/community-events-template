@@ -172,18 +172,11 @@
 
 用 Claude Code、Codex 或 Gemini CLI 開啟這個資料夾：
 
-1. 填好 [`MY-COMMUNITY.md`](MY-COMMUNITY.md)（社區名稱、管理員 Email、身分選項……）。
-2. 對 AI 說：
-
-   > 請依 community-setup skill，讀取 MY-COMMUNITY.md，幫我把這個模板設定好並部署。
-
-AI 會依 [`.agents/skills/community-setup/SKILL.md`](.agents/skills/community-setup/SKILL.md) 的步驟操作：填設定、在你的電腦上預覽、部署、設定後台登入，最後帶你完成開站檢查。每次要部署或建立雲端資源之前，AI 都會先問你。
-
-第一次架站、`MY-COMMUNITY.md` 還沒填也沒關係，可以直接說：
+不用自己填任何檔案，對 AI 說：
 
 > 第一次上架，用 community-setup 帶我設定。
 
-AI 會依 [`.agents/skills/first-launch/SKILL.md`](.agents/skills/first-launch/SKILL.md) 帶你：先確認不會蓋到已經存在的網站，再用問答幫你填好 `MY-COMMUNITY.md`，然後一關一關完成。中途中斷也沒關係，下次說「接著上次的上架進度」就會從停下的地方繼續。
+AI 會依 [`.agents/skills/first-launch/SKILL.md`](.agents/skills/first-launch/SKILL.md) 帶你：先確認不會蓋到已經存在的網站，再一關一關問你需要的資料（社區名稱、網址、管理員 Email、要不要寄信……），一次問幾題、附上範例，你回答「用預設」也可以。答案只存在你的電腦（`.local/setup-answers.json`），AI 會自動寫進網站設定，再帶你預覽、部署、設定後台登入，最後完成開站檢查。每次要部署或建立雲端資源之前，AI 都會先問你。題目清單在 [`scripts/setup-questions.mjs`](scripts/setup-questions.mjs)。中途中斷也沒關係，下次說「接著上次的上架進度」就會從停下的地方繼續。
 
 - Claude Code 讀 `CLAUDE.md`，Codex 讀 `AGENTS.md`，Gemini CLI 讀 `GEMINI.md`，三者內容相同。
 - skill 同時放在 `.claude/skills/` 與 `.agents/skills/`。

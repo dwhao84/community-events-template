@@ -1,6 +1,6 @@
 ---
 name: first-launch
-description: 第一次上架：帶完全沒架過站的主辦方，從零把這個模板變成自己社區的正式網站。先確認真的是第一次（不會蓋到既有網站或別的專案），用問答幫忙填好 MY-COMMUNITY.md，再依 community-setup 的步驟一關一關做完：本機預覽、部署、後台登入、報名防護、開站檢查。每一關都會停下來等確認，中途中斷也能接著做。當使用者說「第一次上架」「從頭帶我架站」「我還沒部署過，帶我設定」「帶我用 community-setup 設定」「接著上次的上架進度」時使用。已經上線、只要更新程式或內容時不要用這個 skill。
+description: 第一次上架：帶完全沒架過站的主辦方，從零把這個模板變成自己社區的正式網站。先確認真的是第一次（不會蓋到既有網站或別的專案），每一關需要的資料都用開站問卷一題一題問（不用自己填檔案），再依 community-setup 的步驟一關一關做完：本機預覽、部署、後台登入、報名防護、開站檢查。每一關都會停下來等確認，中途中斷也能接著做。當使用者說「第一次上架」「從頭帶我架站」「我還沒部署過，帶我設定」「帶我用 community-setup 設定」「接著上次的上架進度」時使用。已經上線、只要更新程式或內容時不要用這個 skill。
 ---
 
 # 第一次上架（一步一步帶著做）
@@ -24,8 +24,8 @@ description: 第一次上架：帶完全沒架過站的主辦方，從零把這�
 - **同一階段可以一次同意。** 第 5 關（第一次部署）和 C3（報名防護）各自有腳本，會把這一階段要做的事全部列出來（`--plan`）。把整份清單原樣給對方看，對方回覆一次「同意」，就用 `--yes` 連續做完這一階段；清單以外的事、或下一個階段，要重新問。腳本中途失敗時，先回報，不要自行換方法重試。
 - **秘密不經過對話。** AI 自己產生的秘密用管線直接交給 `wrangler secret put`。第三方給的秘密（Turnstile、Resend）請對方自己在終端機輸入；在 Claude Code 裡可以請對方在輸入框打 `! npx wrangler secret put <名稱>`。絕不請對方把秘密貼進對話。
 - **個資不寫進會提交的檔案。** 管理員 Email、`wrangler whoami` 顯示的帳號資料都屬於個資。
-  - 管理員 Email 只用在 `ADMIN_BOOTSTRAP_EMAIL` 秘密和 Cloudflare Access 設定。
-  - 如果對方已經把 Email 填在 `MY-COMMUNITY.md`，在任何 `git push` 前先提醒：GitHub repo 若是公開的，這個檔案會被所有人看到；建議把那一行清空再提交。
+  - 管理員 Email 只存在問卷答案檔（`.local/setup-answers.json`，不會提交），只用在 `ADMIN_BOOTSTRAP_EMAIL` 秘密和 Cloudflare Access 設定。
+  - 回覆時不要複述 Email；需要確認時用 `npm run setup -- show`，個資會被遮住。
 - **不在正式站測試。** 不送測試報名、不寄測試信給住戶。功能測試只在本機 `npm run dev` 做。
 - **AI 進不了後台。** 正式站的 `/admin/` 受 Cloudflare Access 保護，不得嘗試繞過；後台的事交給人。
 - **回報要誠實。** 分清楚三種狀態：「已做完並確認」、「對方說做好了，但還沒確認」、「還沒做」。
@@ -36,6 +36,31 @@ description: 第一次上架：帶完全沒架過站的主辦方，從零把這�
 - 每完成一關就更新一次：關卡編號、狀態、日期，以及必要的公開值（例如 Worker 名稱、網站網址）。
 - **不得**記錄秘密值或個資（包括管理員 Email）。
 - 開始時如果這個檔案已經存在，先讀它，用兩三句話告訴對方「上次做到哪裡、下一步是什麼」，確認後從那裡繼續，不要從頭再來。
+
+## 開站問卷：所有資料都用問的
+
+主辦方不需要自己打開或填寫任何檔案。每一關要的資料都列在 `scripts/setup-questions.mjs`，由你照題目問、存答案、套用：
+
+1. **取得題目**：`npm run setup -- next --stage <關卡>`（快速開站加 `--quick`）。會回傳這一關還沒答的題目，一次最多 4 題，每題有白話問題、範例和預設值。
+2. **發問**：一則訊息問完這幾題，原樣附上範例；有預設值的寫「不知道可以回『用預設』」。標了 `private` 的題目（管理員 Email）說明「只存在這台電腦」。
+3. **存答案**：把對方的回答整理成 JSON，執行 `npm run setup -- set '<JSON>'`。
+   - 回「用預設」的題目傳 `null`；回「沒有」的連結傳 `[]`、文字傳 `""`；要不要的題目傳 `true`／`false`；多個選項傳陣列。
+   - 有 `errors` 時，把錯誤訊息用白話轉告對方再問一次那幾題，不要自行修改答案。
+   - 對方答的內容不清楚時先問清楚，不要猜。社區名稱、聯絡方式、介紹文字都由主辦方決定，AI 不得自己編寫。
+4. **複述確認**：存好後用 `npm run setup -- show --stage <關卡>` 列出這一關的答案（個資會遮住），請對方確認；要改就再 `set` 一次。
+5. **套用**：對方確認後執行 `npm run setup -- apply --stage <關卡>`，它會寫進設定檔並跑設定預檢。
+6. 重複 1–5，直到 `next` 回傳 `{"done":true}` 或換到下一關。隨時可用 `npm run setup -- status` 看每一關還缺哪些。
+
+| 關卡 | 問卷 `--stage` | 套用到 |
+| --- | --- | --- |
+| 第 3 關 內容 | `content` | `site.config.json`、`public/site.webmanifest` |
+| 第 3 關 網址與管理員 | `deploy` | `wrangler.jsonc`（名稱、自訂網域）；管理員 Email 由 `deploy:first` 讀取 |
+| 第 6 關 C1 | `login` | `wrangler.jsonc` 的 Access 設定 |
+| 第 6 關 C3 | `protect` | 由 `npm run setup:turnstile` 讀取 Site Key |
+| 第 7 關 | `optional` | `wrangler.jsonc` 的寄信與 GA4 設定 |
+| 第 8 關 | `launch` | 不寫檔；你依答案起草個資告知、自訂頁面、第一個活動，標示為草稿交給主辦方 |
+
+中斷後重新開始時，答案還在；用 `status` 看進度，從還沒答的題目接著問。
 
 ## 第 0 關：確認真的是第一次上架
 
@@ -75,8 +100,8 @@ description: 第一次上架：帶完全沒架過站的主辦方，從零把這�
 
 接著讓對方選擇節奏（記到進度檔）：
 
-- **快速開站**（想今天就上線）：第 3 關只問 3 個必填——社區／網站名稱、Worker 名稱、第一位管理員 Email。其他欄位先用模板預設，上線後在後台改（配色、關於我們、Banner 都能在後台改）。
-- **逐項引導**（想一次把內容填完整）：第 3 關依 `MY-COMMUNITY.md` 逐節問。
+- **快速開站**（想今天就上線）：第 3 關只問必要的幾題——社區名稱、網站名稱（可用預設）、網站程式名稱、第一位管理員 Email。其他題目全部用預設，上線後在後台改（配色、關於我們、Banner 都能在後台改）。
+- **逐項引導**（想一次把內容填完整）：第 3 關把問卷的每一題都問過。
 
 兩種都會經過同樣的安全關卡（後台登入、報名防護、個資告知），差別只在第 3 關問多少。
 
@@ -94,40 +119,22 @@ description: 第一次上架：帶完全沒架過站的主辦方，從零把這�
 
 把選擇記到進度檔。選命令列時，接著做 A2（工具）和 A3（`npx wrangler login`，對方要在瀏覽器按 Allow）。
 
-## 第 3 關：問答填好 `MY-COMMUNITY.md`（A1）
+## 第 3 關：用問卷問完社區內容與網址（A1、B3）
 
-**快速開站模式**：一則訊息問完這 3 題，就跳到第 4 項的格式檢查：
+依上面「開站問卷」的步驟，先問 `content`，再問 `deploy`：
 
-1. 社區名稱與網站名稱（例如「幸福社宅」「幸福社區活動」）。網站名稱沒給就用「<社區名稱>活動報名」；標誌字預設取網站名稱第一個字。
-2. Worker 名稱（英文小寫、數字和 `-`，例如 `happy-events`；也會成為網址的一部分）。
-3. 第一位管理員 Email（只留在對話，不寫進檔案）。
-
-其他欄位用模板預設值，`○○` 這類預留文字換成社區名稱。告訴對方哪些欄位用了預設、之後在後台哪裡改；`npm run config:check` 會列出還有 `○○` 的欄位。
-
-**逐項引導模式**：
-
-1. 先讀 `MY-COMMUNITY.md`，把已經填好的欄位列出來，請對方確認。
-2. 對空白的欄位，依檔案裡的章節順序發問：
-   - 每則訊息只問 2–4 題，附上檔案裡的範例當作預設值。
-   - 對方也可以回答「先用預設」。
-3. 每答完一節，就把答案寫回 `MY-COMMUNITY.md`。
-   - 第 5 節的管理員 Email 不寫進檔案，只留在對話中。B3 設定秘密、C1 設定 Access 時，再請對方確認一次。
-4. 依 community-setup 的規則檢查答案，不合理就再問一次，不要自行修正：
-   - 網址必須是 https；
-   - 標誌字只能一個字；
-   - 每個身分選項最多 50 字；
-   - Worker 名稱只能用英文小寫、數字和 `-`。
-5. 社區名稱、聯絡方式、關於我們等內容都由主辦方決定，AI 不得自己編寫。可以提供草稿，但要明確標示「這是草稿，請修改或確認」。
+- **快速開站**：`npm run setup -- next --stage content --quick`、`npm run setup -- next --stage deploy --quick`，各一則訊息就問完。其他題目不用問，套用時自動用預設（`○○` 預留文字會換成社區名稱）；告訴對方哪些用了預設、之後在後台哪裡改。
+- **逐項引導**：不加 `--quick`，一次 2–4 題問到 `content`、`deploy` 都沒有剩下的題目。
+- 兩關都確認後，執行 `npm run setup -- apply --stage content` 和 `npm run setup -- apply --stage deploy`。`name`、`database_name`、`bucket_name` 會用同一個前綴；**不要填 `database_id`**。
+- 管理員 Email 不會寫進任何會提交的檔案，第 5 關的 `deploy:first` 會直接從答案檔讀。
 
 ## 第 4 關：寫入設定並在本機預覽
 
 依 community-setup 第 1–4 步執行：
 
 1. 執行 `npm run check`，確認一開始就是全部通過（第 0 關已經 `npm install`）。
-2. 依對照表寫入 `site.config.json`、`public/site.webmanifest` 和 `wrangler.jsonc`。
-   - `name`、`database_name`、`bucket_name` 使用同一個前綴。
-   - **不要填 `database_id`。**
-3. 再執行一次 `npm run check`。它會先跑設定預檢（`scripts/config-check.mjs`），Worker 名稱、`SITE_URL`、標誌字、配色等格式錯誤會直接列出；照訊息跟對方確認後修正。
+2. 確認第 3 關已經 `apply` 過（`npm run setup -- status`）。
+3. 再執行一次 `npm run check`。它會先跑設定預檢（`scripts/config-check.mjs`）；有錯誤時用 `npm run setup -- set` 重問那一題再 `apply`，不要直接改設定檔。
 4. 在本機預覽：執行 `npm run setup:local -- --with-sample`。
    - 它會檢查工具、在 `.dev.vars` 不存在時自動產生本機用的隨機值（已存在就不動），不經確認套用本機資料庫，並加入一個「【示範】」活動（兩個未來場次），讓首頁不是空白。全部只寫在這台電腦的 `.wrangler/`，不碰正式網站。
    - 本機後台登入權杖在 `.dev.vars` 的 `LOCAL_ADMIN_TOKEN`；請對方自己打開檔案複製，不要把它貼進對話。
@@ -141,13 +148,13 @@ description: 第一次上架：帶完全沒架過站的主辦方，從零把這�
 
 命令列部署用 `npm run deploy:first`，一次同意就連續做完。選 Deploy 按鈕的，依 community-setup 第 5 步 A 進行，不用這支腳本。
 
-1. **列出清單**：執行 `npm run deploy:first -- --plan --admin-email <管理員 Email>`。
+1. **列出清單**：執行 `npm run deploy:first -- --plan`。
    - 只讀不改：跑檢查、確認登入帳號、確認沒有同名 Worker／D1／R2、確認 R2 已啟用。
    - 有同名資源、R2 未啟用、多個帳號時，腳本會停下並說明怎麼做（R2 未啟用就交接 A3 第 4 點）。照訊息處理，不要自行刪資源或改名繞過。
 2. **取得一次同意**：把腳本列出的 a–e 原樣給對方看，並補充：部署可以用舊版本回復，但建立好的資料庫和圖片空間要另外手動刪除。對方回覆「同意」後才往下。
-3. **執行**：`npm run deploy:first -- --yes --admin-email <管理員 Email>`。它會依序：
+3. **執行**：`npm run deploy:first -- --yes`。它會依序：
    - 部署並自動建立 D1、R2；套用遠端 migration；
-   - 產生 `RATE_SALT`、`FEEDBACK_TOKEN_SECRET`（已存在就不改），連同 `ADMIN_BOOTSTRAP_EMAIL` 經 stdin 寫入秘密，不會顯示；
+   - 產生 `RATE_SALT`、`FEEDBACK_TOKEN_SECRET`（已存在就不改），連同問卷裡的管理員 Email（`ADMIN_BOOTSTRAP_EMAIL`）經 stdin 寫入秘密，不會顯示；
    - 把 workers.dev 網址回填到 `wrangler.jsonc` 的 `SITE_URL` 並再部署一次；
    - 檢查首頁 200 與 CSP、HSTS、X-Content-Type-Options。
 4. **記錄結果**：腳本會把版本 ID、網址與檢查結果寫進 `.local/deploy-log.md`（不含秘密）；把網址與版本也記到進度檔。
@@ -162,14 +169,14 @@ description: 第一次上架：帶完全沒架過站的主辦方，從零把這�
 
 - **C1 Cloudflare Access**
   - 對方在儀表板操作；每做完一步回報一次。
-  - 對方提供 AUD 和團隊網域後，由 AI 寫進 `wrangler.jsonc`，經同意後部署。
+  - 對方建好 Access 應用程式後，用 `npm run setup -- next --stage login` 問團隊網域與 AUD，`set`、確認後 `npm run setup -- apply --stage login`，經同意後 `npm run deploy`。
 - **C2 第一次登入**
   - 請對方用管理員 Email 打開 `/admin/` 並回報結果。
   - AI 不得自己嘗試登入。
 - **C3 Turnstile**：用 `npm run setup:turnstile`。
   - 先執行 `npm run setup:turnstile -- --plan`，把清單給對方看，同意後加 `--yes` 執行。
   - 腳本先試著用 Cloudflare API 建立 widget，Site Key 自動寫進 `wrangler.jsonc`、Secret Key 直接寫入秘密，兩把鑰匙都不經過對話。
-  - API 權限不足時，腳本會印出儀表板連結和要填的網域。請對方建好 widget 後把 **Site Key**（公開值）貼給你，再執行 `npm run setup:turnstile -- --site-key <Site Key> --yes`；腳本會提示對方自己在終端機輸入 Secret Key（Claude Code 可請對方在輸入框打 `! npx wrangler secret put TURNSTILE_SECRET_KEY`）。
+  - API 權限不足時，腳本會印出儀表板連結和要填的網域。請對方建好 widget 後，用 `npm run setup -- next --stage protect` 問 **Site Key**（公開值）並 `set`，再執行 `npm run setup:turnstile -- --yes`；腳本會提示對方自己在終端機輸入 Secret Key（Claude Code 可請對方在輸入框打 `! npx wrangler secret put TURNSTILE_SECRET_KEY`）。
   - 兩把鑰匙到位後，腳本會重新部署，並確認 CSP 含 `challenges.cloudflare.com`。
   - 驗收時不送出報名。
   - 對方決定先不設定時：在進度檔記為「使用者決定略過」，並在最後回報中列為「尚未完成的安全設定」。
@@ -178,12 +185,13 @@ description: 第一次上架：帶完全沒架過站的主辦方，從零把這�
 
 問對方 Email 通知和 GA4 要現在做還是之後再做。
 
-- 要現在做：依 community-setup 第 7 步，以及 manual-handoffs 的 D1、D2 進行。
+- 要現在做：用 `npm run setup -- next --stage optional` 問要不要寄信、寄件人、回信信箱、GA4 衡量 ID，確認後 `npm run setup -- apply --stage optional`；其餘依 community-setup 第 7 步，以及 manual-handoffs 的 D1、D2（Resend 金鑰由對方自己輸入），經同意後部署。
+- 不做也可以先回答「不要」，`apply` 會維持寄信與 GA4 關閉。
 - 之後再做：在進度檔記為「未開始」。
 
 ## 第 8 關：開站檢查（E1–E3）
 
-這些都在後台，由對方操作，AI 準備文字並逐項確認：
+這些都在後台，由對方操作。先用 `npm run setup -- next --stage launch` 問個資聯絡窗口、保存期限、要不要自訂頁面、第一個活動，再依答案準備文字並逐項確認：
 
 1. **E1 個資告知**
    - AI 可以起草，但必須標示為草稿，由主辦方修改並確認。
