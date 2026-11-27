@@ -113,6 +113,25 @@
 
 截圖使用虛構的示範資料（姓名虛構、信箱皆為 `example.com`）。
 
+## 關於我們頁面
+
+`<你的網址>/about.html` 介紹你的社區。內容由主辦方在後台「關於我們頁面」用區塊組成，不用改程式。
+
+<table>
+<tr>
+<td width="62%" valign="top"><img src="docs/images/about/about.jpg" alt="「關於我們」頁面電腦版" width="500"><br><b>電腦版</b></td>
+<td width="38%" valign="top"><img src="docs/images/about/about-mobile.jpg" alt="「關於我們」頁面手機版" width="260"><br><b>手機版</b><br>卡片與圖文區塊會自動改成單欄。</td>
+</tr>
+</table>
+
+範例依序使用了五種區塊：主標題、卡片（3 欄）、圖文並排、連結、聯絡資訊。每個區塊可以選底色（一般、淡色、強調色）與對齊方式。
+
+<img src="docs/images/about/editor.jpg" alt="後台「關於我們頁面」編輯器" width="800">
+
+後台編輯器：新增、上下移動或刪除區塊，儲存後立即生效。
+
+截圖中的文字與插畫都是虛構的示範內容。
+
 ## 開始使用
 
 需要準備：
