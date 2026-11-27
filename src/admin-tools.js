@@ -5,6 +5,7 @@ import {imageInfo} from './photos.js';
 import {sessionICS} from './calendar.js';
 import {site,siteURL} from './site.js';
 import {themes} from './themes.js';
+import {defaultCustomPage,defaultPageTitle} from './custom-page.js';
 import {themeCSS,resolvePalette,paletteProblems,contrastReport,isHex,paletteKeys} from './theme-css.js';
 
 
@@ -177,7 +178,7 @@ export async function siteImageMedia(env,id){
 }
 async function imageReferenced(db,id,exceptBanner){
  if(await one(db,'SELECT 1 FROM banners WHERE image_id=? AND id<>?',id,exceptBanner||''))return true;
- const about=await one(db,"SELECT value FROM settings WHERE key='about_blocks'");return !!about&&about.value.includes(`"${id}"`);
+ const pages=await all(db,"SELECT value FROM settings WHERE key IN ('about_blocks','page_blocks')");return pages.some(p=>p.value.includes(`"${id}"`));
 }
 
 // ---------- Home page banners ----------
@@ -250,22 +251,31 @@ export async function validateAbout(db,blocks){
  }
  return out;
 }
-export async function aboutAPI(db,admin,method,b){
- if(method==='GET'){const cfg=await settings(db);return {blocks:cfg.about_blocks??null,fallback:defaultAbout()};}
- const blocks=await validateAbout(db,b.blocks);
- await db.batch([stmt(db,"INSERT INTO settings VALUES('about_blocks',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",JSON.stringify(blocks)),audit(db,admin.email,'about.update','about',{blocks:blocks.length})]);
- return {ok:true,blocks};
+// Block pages share one block format: About (/about.html) and the organizer-defined page (/page.html, 自訂頁面).
+const blockPages={about:{key:'about_blocks',defaults:()=>defaultAbout()},page:{key:'page_blocks',defaults:()=>defaultCustomPage(),meta:'page_meta'}};
+// Name (menu tab label) of the organizer-defined page and whether the tab is shown; hidden until the organizer turns it on.
+export function customPageMeta(cfg){const m=cfg.page_meta&&typeof cfg.page_meta==='object'?cfg.page_meta:{};return {title:typeof m.title==='string'&&m.title.trim()?m.title.trim():defaultPageTitle,show_link:m.show_link===true};}
+export async function blockPageAPI(db,admin,page,method,b){
+ const p=blockPages[page];
+ if(method==='GET'){const cfg=await settings(db);return {blocks:cfg[p.key]??null,fallback:p.defaults(),...(p.meta?customPageMeta(cfg):{})};}
+ const blocks=await validateAbout(db,b.blocks),writes=[stmt(db,`INSERT INTO settings VALUES('${p.key}',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value`,JSON.stringify(blocks))];
+ let meta=null;
+ if(p.meta){const title=text(b.title??'',30).trim();if(!title)fail(400,'請填頁面名稱（最多 30 字）');meta={title,show_link:b.show_link===true};writes.push(stmt(db,`INSERT INTO settings VALUES('${p.meta}',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value`,JSON.stringify(meta)));}
+ await db.batch([...writes,audit(db,admin.email,`${page}.update`,page,{blocks:blocks.length,...(meta?{show_link:meta.show_link}:{})})]);
+ return {ok:true,blocks,...(meta||{})};
 }
+export const aboutAPI=(db,admin,method,b)=>blockPageAPI(db,admin,'about',method,b);
 // Default About blocks come from site.config.json until an organizer saves their own.
 export function defaultAbout(){
  const a=site.about||{};const paragraphs=Array.isArray(a.paragraphs)?a.paragraphs.filter(p=>typeof p==='string'):[];
  return [{type:'hero',tone:'accent',align:'left',title:a.title||'關於我們',text:site.tagline||''},...(paragraphs.length?[{type:'text',tone:'plain',align:'left',heading:site.communityName,body:paragraphs.join('\n\n')}]:[]),...(a.contact?[{type:'contact',tone:'tinted',align:'left',heading:'聯絡我們',body:a.contact}]:[])];
 }
-export async function publicAbout(db){
- const cfg=await settings(db);const blocks=Array.isArray(cfg.about_blocks)?cfg.about_blocks:defaultAbout();
+export const publicAbout=db=>publicBlocks(db,'about');
+export async function publicBlocks(db,page){
+ const p=blockPages[page],cfg=await settings(db);const blocks=Array.isArray(cfg[p.key])?cfg[p.key]:p.defaults();
  const ids=blocks.filter(b=>b.type==='image_text').map(b=>b.image_id);
  const dims=ids.length?Object.fromEntries((await all(db,`SELECT id,width,height FROM site_images WHERE id IN (${ids.map(()=>'?').join(',')})`,...ids)).map(r=>[r.id,r])):{};
- return {blocks:blocks.map(b=>b.type==='image_text'?{...b,width:dims[b.image_id]?.width||null,height:dims[b.image_id]?.height||null}:b)};
+ return {...(p.meta?customPageMeta(cfg):{}),blocks:blocks.map(b=>b.type==='image_text'?{...b,width:dims[b.image_id]?.width||null,height:dims[b.image_id]?.height||null}:b)};
 }
 
 // ---------- Public calendar file ----------

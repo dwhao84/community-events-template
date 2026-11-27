@@ -28,12 +28,12 @@
 | 5 | 在自己電腦上預覽 | AI，人確認畫面 | 10 分鐘 |
 | 6 | 登入 Cloudflare | 人 | 5 分鐘 |
 | 7 | 調整部署設定 | AI | 5 分鐘 |
-| 8 | 第一次部署 | AI【需同意】 | 5 分鐘 |
-| 9 | 設定秘密 | AI【需同意】 | 3 分鐘 |
-| 10 | 填入正式網址並重新部署 | AI【需同意】 | 3 分鐘 |
+| 8 | 第一次部署（`npm run deploy:first`，含 9、10） | AI【需同意一次】 | 5–10 分鐘 |
+| 9 | 設定秘密 | 已由步驟 8 完成 | — |
+| 10 | 填入正式網址並重新部署 | 已由步驟 8 完成 | — |
 | 11 | 設定後台登入（Access） | 人，AI 接手 | 15 分鐘 |
 | 12 | 第一次登入後台 | 人 | 3 分鐘 |
-| 13 | 報名防護（Turnstile） | 人，AI 接手 | 10 分鐘 |
+| 13 | 報名防護（`npm run setup:turnstile`） | AI【需同意】，權限不足時人接手 | 5–10 分鐘 |
 | 14 | Email 通知（選用） | 人，AI 接手 | 20 分鐘以上 |
 | 15 | 網站分析（選用） | 人，AI 接手 | 30 分鐘 |
 | 16 | 後台開站設定 | 人 | 30–60 分鐘 |
@@ -51,6 +51,7 @@
 | 全部做完 | 1–17 | 約 3～4 小時 |
 
 - **最花時間的是內容，不是技術設定。** 步驟 4（填社區內容）和步驟 16（個資告知、圖片、第一個活動）合計 50–100 分鐘。部署、秘密、登入保護等技術步驟交給 AI 的話，合計約 1 小時，大多是人在 Cloudflare 網頁上點選的時間。
+- **想先上線再慢慢改？** 請 AI 用 `first-launch` 的「快速開站模式」：只問社區／網站名稱、Worker 名稱、管理員 Email，其他先用預設，上線後在後台改。
 - **事先準備好可以更快。** `MY-COMMUNITY.md` 已填好、圖片與個資告知文字已備妥、電腦已有 Node.js 時，大約 1 個半小時就能上線。準備清單見 [`manual-handoffs.md`](manual-handoffs.md#開始前請準備)。
 - **另外有等待時間，不必一直守著。** 自訂網域把 nameserver 改到 Cloudflare，以及 Resend 寄件網域的 DNS 驗證，各需要幾分鐘到幾小時。要用自訂網域或寄 Email 的話，建議分兩次完成：第一次先用免費的 `workers.dev` 網址把網站架起來，等 DNS 生效後再接上網域與 Email。
 
@@ -126,44 +127,34 @@ npm run check
 
 **誰做**：【AI】啟動，【人】看畫面
 
-1. 建立本機設定檔：
+1. 【AI】一個指令準備好並啟動本機預覽：
 
    ```sh
-   cp .dev.vars.example .dev.vars
+   npm run setup:local -- --with-sample
    ```
 
-2. 編輯 `.dev.vars`：
-   - 取消註解（刪掉行首的 `#` 和後面的空格）這三行：`APP_ENV=development`、`SITE_URL=http://localhost:8787`、`LOCAL_ADMIN_TOKEN=...`。
-   - 把 `LOCAL_ADMIN_TOKEN` 換成一串隨機文字，可以用這個指令產生：
+   它會檢查 Node.js、sqlite3 與套件；`.dev.vars` 不存在時用隨機值自動產生（已存在就不動，`.dev.vars` 不會被提交）；不需確認就建立本機資料庫；`--with-sample` 會加入一個「【示範】」活動（兩個未來場次），讓首頁不是空白；最後啟動 `npm run dev`。**全部只寫在你的電腦上，不會影響正式網站。**
 
-     ```sh
-     node -e "console.log(crypto.randomUUID())"
-     ```
-
-   - 想在本機試用報名防護的話，也取消註解兩行 Turnstile 測試金鑰（`1x000...`）。
-
-   `.dev.vars` 只放在你的電腦上，不會被提交到 GitHub。
-
-3. 建立本機資料庫並啟動：
-
-   ```sh
-   npm run db:local
-   npm run dev
-   ```
-
-4. 【人】用瀏覽器打開：
+2. 【人】用瀏覽器打開：
    - 首頁：<http://localhost:8787>
-   - 後台：<http://localhost:8787/admin/>，在登入畫面輸入 `.dev.vars` 裡的 `LOCAL_ADMIN_TOKEN`。
+   - 後台：<http://localhost:8787/admin/>，在登入畫面輸入 `.dev.vars` 裡的 `LOCAL_ADMIN_TOKEN`（自己打開檔案複製，不要貼進對話）。
 
-5. 【人】確認名稱與文字正確。本機資料庫一開始沒有活動，可以在後台「活動與場次 → ＋ 新增活動」建一個試試。**這裡的資料只在你的電腦上，不會影響正式網站。**
+3. 【人】確認名稱與文字正確。示範活動可以在本機後台修改或刪除；不加 `--with-sample` 則本機資料庫一開始沒有活動。
 
-6. （選用）【AI】跑完整的報名流程測試。需要另開一個終端機，並保持 `npm run dev` 執行中；測試會在本機資料庫建立一個測試活動：
+4. （選用）【AI】跑完整的報名流程測試。需要另開一個終端機，並保持 `npm run dev` 執行中；測試會在本機資料庫建立一個測試活動：
 
    ```sh
    TEST_ADMIN_TOKEN=<LOCAL_ADMIN_TOKEN 的值> node tests/integration.mjs
    ```
 
-**做完應該看到**：首頁與後台在本機正常顯示。要停止預覽，在執行 `npm run dev` 的終端機按 `Ctrl + C`。
+**做完應該看到**：首頁與後台在本機正常顯示。要停止預覽，在執行 `npm run dev` 的終端機按 `Ctrl + C`；下次只要 `npm run dev`。
+
+<details>
+<summary>手動做法（不用腳本時）</summary>
+
+`cp .dev.vars.example .dev.vars`，取消註解 `APP_ENV=development`、`SITE_URL=http://localhost:8787`、`LOCAL_ADMIN_TOKEN=...` 三行並把權杖換成隨機文字（`node -e "console.log(crypto.randomUUID())"`），想在本機試用報名防護就也取消註解兩行 Turnstile 測試金鑰；再執行 `CI=true npm run db:local`（`CI=true` 讓它不停在 Y/n 確認）與 `npm run dev`。
+
+</details>
 
 ## 步驟 6：登入 Cloudflare
 
@@ -196,7 +187,7 @@ npm run check
 | `d1_databases[0].database_name` | 資料庫名稱，和 `name` 用同一個開頭 | `happy-events` |
 | `r2_buckets[0].bucket_name` | 圖片空間名稱 | `happy-events-photos` |
 | `vars.APP_ENV` | 保持 `production` | `production` |
-| `vars.SITE_URL` | 先留空，步驟 10 再填 | `""` |
+| `vars.SITE_URL` | 先留空，步驟 8 會自動填入 workers.dev 網址 | `""` |
 
 - **不要填 `database_id`**，第一次部署時會自動建立。
 - 有自訂網域時（見 [`manual-handoffs.md` B2](manual-handoffs.md#b2-自訂網域選用建議)），加上：
@@ -205,7 +196,7 @@ npm run check
   "routes": [{"pattern": "<你的網域>", "custom_domain": true}],
   ```
 
-改完再檢查一次：
+改完再檢查一次（第一步是設定預檢，名稱格式、`SITE_URL` 結尾的 `/` 等錯誤會直接列出）：
 
 ```sh
 npm run check
@@ -213,75 +204,59 @@ npm run check
 
 ## 步驟 8：第一次部署
 
-**誰做**：【AI】【需同意】
+**誰做**：【AI】【需同意】——同意一次，步驟 8–10 連續完成
 
-```sh
-npm run deploy
-```
+1. 【AI】先列出這次會做的事（只讀，不做任何變更）：
 
-這個指令會上傳網站程式、自動建立資料庫與圖片空間，並建立資料表。如果過程中詢問是否建立資源，回答是。
+   ```sh
+   npm run deploy:first -- --plan --admin-email <管理員 Email>
+   ```
 
-- 如果出現 R2 尚未啟用的訊息：【人】到 Cloudflare 儀表板 → **R2** 依畫面啟用。可能需要綁定付款方式，但在免費額度內不會收費。完成後再執行一次 `npm run deploy`。
+   它會跑 `npm run check`、確認登入的 Cloudflare 帳號、確認帳號裡**沒有**同名的 Worker／D1／R2（避免蓋到既有網站），並確認 R2 已啟用。
+   - R2 尚未啟用：【人】打開 <https://dash.cloudflare.com/?to=/:account/r2/overview> 依畫面啟用（可能需要綁定付款方式，免費額度內不收費），再重跑 `--plan`。
+   - 有多個帳號：依訊息加上 `CLOUDFLARE_ACCOUNT_ID=<id>`。
+   - 已有同名資源：不要刪，先確認那是什麼；不是這個網站的就在步驟 7 換名稱。
 
-確認資源已建立：
+2. 【人】看過清單，回覆同意。
+3. 【AI】執行：
 
-```sh
-npx wrangler d1 list
-npx wrangler r2 bucket list
-```
+   ```sh
+   npm run deploy:first -- --yes --admin-email <管理員 Email>
+   ```
 
-**做完應該看到**：部署訊息最後有網站網址，例如 `https://happy-events.<子網域>.workers.dev`，**把這個網址記下來**。`d1 list` 和 `r2 bucket list` 列出步驟 7 取的名稱。
+   依序完成：上傳網站並自動建立資料庫與圖片空間 → 建立資料表 → 步驟 9 的秘密 → 步驟 10 的網址回填與重新部署 → 安全標頭檢查。秘密由電腦隨機產生、直接傳給 Cloudflare，**不會顯示在畫面上**。
+
+**做完應該看到**：最後顯示「✔ 第一次部署完成」、網站網址（例如 `https://happy-events.<子網域>.workers.dev`）與版本 ID，四項檢查都是 ✔。紀錄寫在 `.local/deploy-log.md`。`wrangler.jsonc` 的 `SITE_URL` 已被填入，記得 commit。
 
 此時網站已經上線，但後台還不能登入、也還不能開放報名，這是正常的。
 
 ## 步驟 9：設定秘密
 
-**誰做**：【AI】【需同意】【秘密】
+**誰做**：【AI】【需同意】【秘密】——用 `deploy:first` 時已完成，跳到步驟 11。
 
-前兩個秘密由電腦隨機產生，直接傳給 Cloudflare，**不會顯示在畫面上**：
-
-```sh
-node -e "console.log(crypto.randomUUID()+crypto.randomUUID())" | npx wrangler secret put RATE_SALT
-node -e "console.log(crypto.randomUUID()+crypto.randomUUID())" | npx wrangler secret put FEEDBACK_TOKEN_SECRET
-```
-
-第一位管理員的 Email（必須和步驟 11 允許登入的 Email 相同）：
-
-```sh
-printf '%s' '<管理員 Email>' | npx wrangler secret put ADMIN_BOOTSTRAP_EMAIL
-```
-
-確認：
+`deploy:first` 會設定 `RATE_SALT`、`FEEDBACK_TOKEN_SECRET`（已存在就不改）與 `ADMIN_BOOTSTRAP_EMAIL`（必須和步驟 11 允許登入的 Email 相同）。確認（只顯示名稱）：
 
 ```sh
 npx wrangler secret list
 ```
 
-**做完應該看到**：列出 `RATE_SALT`、`FEEDBACK_TOKEN_SECRET`、`ADMIN_BOOTSTRAP_EMAIL`。這個指令只顯示名稱，不會顯示值。
+手動做法：
+
+```sh
+node -e "console.log(crypto.randomUUID()+crypto.randomUUID())" | npx wrangler secret put RATE_SALT
+node -e "console.log(crypto.randomUUID()+crypto.randomUUID())" | npx wrangler secret put FEEDBACK_TOKEN_SECRET
+printf '%s' '<管理員 Email>' | npx wrangler secret put ADMIN_BOOTSTRAP_EMAIL
+```
 
 ## 步驟 10：填入正式網址並重新部署
 
-**誰做**：【AI】【需同意】
+**誰做**：【AI】【需同意】——用 `deploy:first` 時已完成。
 
-1. 把步驟 8 記下的網址（或你的自訂網域）填入 `wrangler.jsonc`：
+`SITE_URL` 是信件連結、行事曆與課程回饋需要的網址，結尾不加 `/`。改用自訂網域時，把 `wrangler.jsonc` 的 `"SITE_URL"` 改成 `https://<你的網域>`，執行 `npm run deploy`，再確認：
 
-   ```jsonc
-   "SITE_URL": "https://<你的網址>",
-   ```
-
-   網址結尾不要加 `/`。信件裡的連結、行事曆與課程回饋都需要這個值。
-
-2. 重新部署：
-
-   ```sh
-   npm run deploy
-   ```
-
-3. 確認網站與安全設定：
-
-   ```sh
-   curl -sI https://<你的網址> | grep -iE "^HTTP|content-security-policy"
-   ```
+```sh
+curl -sI https://<你的網址> | grep -iE "^HTTP|content-security-policy"
+```
 
 **做完應該看到**：`HTTP/2 200`，以及一行 `content-security-policy`。
 
@@ -328,32 +303,25 @@ npx wrangler d1 execute DB --remote --command "SELECT COUNT(*) AS modules FROM a
 
 ## 步驟 13：報名防護（Cloudflare Turnstile）
 
-**誰做**：【人】建立 widget 並輸入秘密，【AI】接手設定
+**誰做**：【AI】【需同意】；權限不足時【人】建立 widget 並輸入秘密
 
 強烈建議在開放報名前完成，否則有人可以用程式灌假報名。
 
-1. 【人】Cloudflare 儀表板 → **Turnstile → Add widget**：主機名稱填網站網域，Widget Mode 選 **Managed**。
-2. 【人】把 **Site Key**（公開值）告訴 AI。
-3. 【人】【秘密】自己在終端機輸入 **Secret Key**（不要貼到對話裡）：
+1. 【AI】列出清單，【人】同意後執行：
 
    ```sh
-   npx wrangler secret put TURNSTILE_SECRET_KEY
+   npm run setup:turnstile -- --plan
+   npm run setup:turnstile -- --yes
    ```
 
-4. 【AI】填入 `wrangler.jsonc`：
+   腳本先試著用 Cloudflare API 建立 Managed widget：成功時 Site Key 自動寫進 `wrangler.jsonc`、Secret Key 直接存成秘密，兩把鑰匙都不會出現在畫面或對話。接著重新部署並檢查 CSP。
 
-   ```jsonc
-   "TURNSTILE_SITE_KEY": "<Site Key>",
-   ```
+2. API 權限不足時，腳本會印出儀表板連結和要填的網域：
+   - 【人】Cloudflare 儀表板 → **Turnstile → Add widget**：主機名稱填腳本印的網域，Widget Mode 選 **Managed**。
+   - 【人】把 **Site Key**（公開值）告訴 AI，【AI】執行 `npm run setup:turnstile -- --site-key <Site Key> --yes`。
+   - 【人】【秘密】腳本會請你自己在終端機輸入 **Secret Key**（不要貼到對話裡）：`npx wrangler secret put TURNSTILE_SECRET_KEY`，完成後 AI 再執行一次同一行。
 
-5. 【AI】【需同意】部署並確認：
-
-   ```sh
-   npm run deploy
-   curl -sI https://<你的網址> | grep -i content-security-policy | grep -o challenges.cloudflare.com
-   ```
-
-**做完應該看到**：`curl` 印出 `challenges.cloudflare.com`；用手機打開報名表，送出按鈕上方出現「確認您是真人」的方框。**只要看到就好，不要送出報名。** 見 [`manual-handoffs.md` C3](manual-handoffs.md#c3-報名防護cloudflare-turnstile)。
+**做完應該看到**：「✔ 報名防護已開啟」，檢查項目含「CSP 允許 challenges.cloudflare.com ✔」；用手機打開報名表，送出按鈕上方出現「確認您是真人」的方框。**只要看到就好，不要送出報名。** 見 [`manual-handoffs.md` C3](manual-handoffs.md#c3-報名防護cloudflare-turnstile)。
 
 ## 步驟 14：Email 通知（選用）
 
@@ -456,7 +424,8 @@ npx wrangler d1 execute DB --remote --command "SELECT COUNT(*) AS modules FROM a
 | 列出已設定的秘密名稱 | `npx wrangler secret list` | AI |
 | 更換秘密 | `npx wrangler secret put <名稱>` | 自動產生的由 AI【需同意】；第三方秘密由人輸入 |
 | 新增管理員 | 先在 Access 加 Email（人），再 `npx wrangler d1 execute DB --remote --command "INSERT INTO admin_permissions VALUES ('<email>','<模組>')"` | 人＋AI【需同意】 |
-| 本機預覽 | `npm run dev` | AI |
+| 檢查設定檔格式 | `npm run config:check` | AI |
+| 本機預覽（第一次或資料庫重建後） | `npm run setup:local`（加 `-- --with-sample` 匯入示範活動）；之後只要 `npm run dev` | AI |
 | 本機完整流程測試 | `TEST_ADMIN_TOKEN=<權杖> node tests/integration.mjs`（需開著 `npm run dev`） | AI |
 
 注意：

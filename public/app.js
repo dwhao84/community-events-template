@@ -84,7 +84,7 @@ async function load(){
  }).join(''):'<p class="empty">活動準備中，歡迎稍後回來看看。</p>';
  for(const b of document.querySelectorAll('.join-button'))b.addEventListener('click',()=>openForm(b.dataset.id,{},'activity_card'));
  observeContent();
- for(const b of document.querySelectorAll('.photo-button'))b.addEventListener('click',()=>{track('photo_view',{event_id:b.closest('[data-event-id]').dataset.eventId});document.querySelector('#large-photo').src='/media/'+b.dataset.id;document.querySelector('#large-photo').alt=b.dataset.caption||'活動照片';document.querySelector('#photo-caption').textContent=b.dataset.caption;document.querySelector('#photo-dialog').showModal();});
+ for(const b of document.querySelectorAll('.photo-button'))b.addEventListener('click',()=>{track('photo_view',{event_id:b.closest('[data-event-id]').dataset.eventId});let photo=document.querySelector('#large-photo');if(!photo){photo=document.createElement('img');photo.id='large-photo';document.querySelector('#photo-caption').before(photo);}photo.src='/media/'+b.dataset.id;photo.alt=b.dataset.caption||'活動照片';document.querySelector('#photo-caption').textContent=b.dataset.caption;document.querySelector('#photo-dialog').showModal();});
  }catch(e){updateMascotRegistration('error');document.querySelector('#events').innerHTML=`<p class="error">${esc(e.message)}</p><button class="button secondary" id="reload">重新載入</button>`;document.querySelector('#reload').onclick=load;}
 }
 async function openForm(id,previous={},entryPoint=registrationContext.entry_point||'activity_card') {

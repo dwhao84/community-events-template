@@ -8,6 +8,7 @@ import {sessionICS,fold,icsEscape,googleCalendarURL} from '../src/calendar.js';
 import {bootstrapAdmin} from '../src/auth.js';
 import {handle} from '../src/worker.js';
 import {payloadFor,jobEligible} from '../src/mail.js';
+import {site} from '../src/site.js';
 
 // In-memory D1 with every migration, an R2 stub and two future sessions (dates are set by the test, not by real events).
 const migrations=new URL('../migrations/',import.meta.url);
@@ -208,6 +209,31 @@ test('關於我們區塊：驗證類型與連結、保留版型設定，未設�
  await rejects(call(e,'PUT','about',{blocks},['photos']),403);
 });
 
+test('自訂頁面：名稱（選單分頁）、是否顯示與內容由主辦方設定並立即生效；預設中性且不顯示；舊網址轉址；使用中的圖片不會被 Banner 刪除帶走',async()=>{
+ const e=env();const pub=async()=>(await (await handle(new Request('https://events.example.org/api/page'),e)).json());
+ const {defaultCustomPage}=await import('../src/custom-page.js');
+ let p=await pub();assert.equal(p.title,'社區資訊');assert.equal(p.show_link,false);assert.deepEqual(p.blocks,defaultCustomPage());
+ assert.deepEqual(await validateAbout(e.DB,defaultCustomPage()),defaultCustomPage(),'預設內容符合區塊規則');
+ assert.doesNotMatch(JSON.stringify(p),/防詐/,'預設不含防詐內容');
+ const admin=await call(e,'GET','page');assert.equal(admin.blocks,null);assert.equal(admin.templates,undefined);
+ const out=await call(e,'PUT','page',{title:'垃圾清運時間',show_link:true,blocks:[{type:'hero',title:'垃圾清運',text:'每週一三五晚上'},{type:'links',items:[{label:'清潔隊',url:'tel:1999'}]}]});
+ assert.equal(out.title,'垃圾清運時間');assert.equal(out.show_link,true);
+ p=await pub();assert.equal(p.title,'垃圾清運時間');assert.equal(p.show_link,true);assert.deepEqual(p.blocks.map(b=>b.title||b.type),['垃圾清運','links'],'儲存後公開 API 立即是新內容');
+ assert.deepEqual((await publicData(e)).custom_page,{title:'垃圾清運時間',show_link:true});
+ await call(e,'PUT','page',{title:'社區公約',show_link:false,blocks:[{type:'text',body:'請愛護公共空間'}]});assert.deepEqual(await pub().then(x=>[x.title,x.show_link]),['社區公約',false]);
+ await rejects(call(e,'PUT','page',{title:' ',blocks:[]}),400,/頁面名稱/);
+ await rejects(call(e,'PUT','page',{title:'x'.repeat(31),blocks:[]}),400);
+ await rejects(call(e,'PUT','page',{title:'x',blocks:[{type:'links',items:[{label:'x',url:'javascript:alert(1)'}]}]}),400);
+ await rejects(call(e,'PUT','page',{title:'x',blocks:[]},['photos']),403);
+ assert.notEqual((await call(e,'GET','about')).blocks?.[0]?.title,'垃圾清運','關於我們不受影響');
+ const old=await handle(new Request('https://events.example.org/safety.html'),e);assert.equal(old.status,301);assert.equal(old.headers.get('location'),'https://events.example.org/page.html');
+ const bytes=png(),raw={method:'POST',headers:new Headers({'content-length':String(bytes.length)}),body:new Blob([bytes]).stream()};
+ const img=await call(e,'POST','site-images?alt=x',undefined,everything,raw);
+ await call(e,'PUT','page',{title:'公告',show_link:false,blocks:[{type:'image_text',image_id:img.id,alt:'海報',body:'說明'}]});
+ const banner=await call(e,'POST','banners',{image_id:img.id,alt:'海報',status:'published'});await call(e,'POST',`banners/${banner.id}/delete`);
+ assert.equal(e.objects.size,1,'自訂頁面仍在使用的圖片保留');
+});
+
 test('第一位管理員：只在尚無管理員時授權 ADMIN_BOOTSTRAP_EMAIL',async()=>{
  const e=env();e.ADMIN_BOOTSTRAP_EMAIL='Owner@Example.com';
  assert.equal(await bootstrapAdmin(e,'someone@example.com'),false);assert.equal(n(e,'SELECT count(*) n FROM admin_permissions'),0);
@@ -231,7 +257,8 @@ test('網站配色：預設維持原色；預設與自訂配色可切換；對�
  assert.match(themeCSS('forest'),/--blue:#2f855a/);assert.doesNotMatch(themeCSS('forest'),/--c-dff4ff:#dff4ff/);
  for(const t of themes)assert.deepEqual(paletteProblems(t),[],t.id);
  const e=env();const css=async(q='')=>{const r=await handle(new Request('https://events.example.org/theme.css'+q),e);assert.match(r.headers.get('content-type'),/text\/css/);return r.text();};
- assert.match(await css(),/site colors: ocean/);
+ const stock=themes.find(t=>t.id===site.theme)?.id||themes[0].id;// default follows site.config.json theme
+ assert.match(await css(),new RegExp(`site colors: ${stock}`));
  assert.equal((await call(e,'GET','appearance')).presets.length,themes.length);
  await call(e,'PUT','appearance',{theme:'sakura'});assert.match(await css(),/site colors: sakura/);
  await rejects(call(e,'PUT','appearance',{theme:'neon'}),400);
@@ -241,7 +268,7 @@ test('網站配色：預設維持原色；預設與自訂配色可切換；對�
  await call(e,'PUT','appearance',{theme:good});const c=await css();assert.match(c,/site colors: custom/);assert.match(c,/--green:#15803d/);
  assert.match(await css('?preview=1&theme=night'),/^\/\* site colors: night \*\/\n\.theme-preview\{/);
  assert.match(await css('?preview=1&theme=ocean'),/\.theme-preview\{[^}]*--blue:#0769c8/,'preview of the default still sets explicit colors');
- assert.match(await css('?preview=1&brand=%23000000'),/site colors: ocean|\.theme-preview/);
+ assert.match(await css('?preview=1&brand=%23000000'),new RegExp(`site colors: ${stock}|\\.theme-preview`));
  const etag=(await handle(new Request('https://events.example.org/theme.css'),e)).headers.get('etag');assert.equal((await handle(new Request('https://events.example.org/theme.css',{headers:{'if-none-match':etag}}),e)).status,304);
  await rejects(call(e,'PUT','appearance',{theme:'forest'},['events']),403);
 });

@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {payloadFor,processJobs} from '../src/mail.js';
+import {site} from '../src/site.js';
+import {escapeHTML} from '../src/lib.js';
+const re=s=>new RegExp(escapeHTML(s).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));
 
 function templateDb(){return {prepare(sql){return {bind(){return this;},async first(){return sql.includes('email_templates')?{subject:'通知 {{event_name}}',body:'{{name}}'}:{email:'resident@example.com',name:'里民',title:'社區活動',starts_at:'2030-11-21T05:30:00.000Z',status:'confirmed',seats:1};}};}};}
 test('營運通知加入指定 CC，未設定時不加入；無效地址拒絕產生內容',async()=>{
@@ -30,7 +33,7 @@ test('正式信件版型依通知類型呈現，保留純文字並安全轉義�
   const data={name:'<img src=x onerror=alert(1)>',event_name:'<script>危險</script>',location:'測試地點',status:'已確認',code:'DEMO',seats:2};
   const result=renderTemplate({kind,subject:'通知 {{event_name}}',body:'{{name}} 您好：\n\n{{location}}'},data,{replyTo:'team@example.com'});
   assert.match(result.html,/<!doctype html>/);
-  assert.match(result.html,/COMMUNITY EVENTS/);assert.match(result.html,/社區活動報名/);
+  assert.match(result.html,re(site.englishBrand.toUpperCase()));assert.match(result.html,re(site.brand));
   assert.match(result.html,/mailto:team@example.com/);
   assert.doesNotMatch(result.html,/<script>|<img/);
   assert.match(result.text,/<img/);

@@ -5,6 +5,7 @@ import {readdirSync,readFileSync} from 'node:fs';
 import {adminAPI} from '../src/api.js';
 import {feedbackPublic} from '../src/feedback.js';
 import {payloadFor,processJobs} from '../src/mail.js';
+import {site} from '../src/site.js';
 import {validateFeedback,feedbackStats,feedbackCSV,formatAverage,formatRate,inviteToken,tokenSecret,tokenHash,exclusionReason} from '../src/feedback-core.js';
 
 const migrations=new URL('../migrations/',import.meta.url);
@@ -65,7 +66,7 @@ test('收件預覽排除取消與候補並列出原因；草稿不可正式寄�
  assert.equal(p.count,3);assert.equal(p.can_send,false);
  assert.deepEqual(Object.fromEntries(p.excluded_summary.map(x=>[x.reason,x.count])),{'候補（未取得名額）':1,'已取消報名':1});
  assert.deepEqual(p.duplicates,[{email:'r1@example.com',count:2}],'同一 Email 不同場次的報名須列出，不合併');
- assert.match(p.message.subject,/【○○社區】課程回饋邀請｜範例測試活動/);assert.doesNotMatch(p.message.text,/token=[A-Za-z0-9_-]{43}/);
+ assert.ok(p.message.subject.includes(`【${site.communityName}】課程回饋邀請｜範例測試活動`),p.message.subject);assert.doesNotMatch(p.message.text,/token=[A-Za-z0-9_-]{43}/);
  const attended=await call(e,'POST',`feedback/${id}/email/preview`,{mode:'attended'});assert.equal(attended.count,1);assert.equal(attended.excluded_summary.find(x=>x.reason==='未簽到').count,2);
  await rejects(call(e,'POST',`feedback/${id}/email/send`,{mode:'registered',confirm:true,operation_id:sid(),expected_count:3}),409);
  await call(e,'POST',`feedback/${id}/publish`);

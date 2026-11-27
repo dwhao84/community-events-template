@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
 import {readdirSync,readFileSync} from 'node:fs';
 import {adminAPI,publicForm,register as publicRegister} from '../src/api.js';
+import {site} from '../src/site.js';
+// Identity choices come from site.config.json; the tests use whatever the community configured.
+const [ID_A,ID_B=ID_A]=site.identities;
 
 const migrations=new URL('../migrations/',import.meta.url);
 const register=(id,session,code,status,seats)=>`INSERT INTO registrations(id,session_id,code,name,email,normalized_email,form_id,status,seats,answers_json,consent_at,consent_version,consent_json,submission_id,created_at,updated_at) VALUES('${id}','${session}','${code}','暱稱${id}','${id}@example.com','${id}@example.com','anti-fraud-v1','${status}',${seats},'{}','2026-10-04T01:00:00.000Z','v1','{}','sub-${id}','2026-10-04T01:00:00.000Z','2026-10-04T01:00:00.000Z');`;
@@ -89,14 +92,14 @@ test('簽到單需要匯出權限，依報到順序列出姓名與收費',async(
 test('手寫簽名、選項及姓名一併儲存；匯出受權限保護；錯誤簽名不破壞原紀錄',async()=>{
  const e=env();await scan(e,'DN-0000000A');
  const signature=[[[0.1,0.2],[0.4,0.8],[0.9,0.2]]];
- await call(e,['checkin'],'PUT','checkins/r1/attendees',{names:['王小明'],people:[{signature,age_group:'大',gender:'男',identity:'附近居民'}]});
+ await call(e,['checkin'],'PUT','checkins/r1/attendees',{names:['王小明'],people:[{signature,age_group:'大',gender:'男',identity:ID_B}]});
  const saved=await scan(e,'DN-0000000A');assert.deepEqual(JSON.parse(saved.people[0].signature_json),signature);
  for(const bad of [[[[2,0]]],[[['NaN',0]]],[],[[[0,0,0]]]])await rejects(call(e,['checkin'],'PUT','checkins/r1/attendees',{names:['錯誤'],people:[{signature:bad}]}),400);
  await rejects(call(e,['checkin'],'PUT','checkins/r1/attendees',{names:['甲','乙','丙'],people:[{},{},{}]}),400);
  await rejects(call(e,[],'PUT','checkins/r1/attendees',{names:['甲']}),403);
  await rejects(call(e,['checkin'],'GET','checkins/sheet?session_id=anti-fraud-20261017'),403);
  const sheet=await call(e,['export'],'GET','checkins/sheet?session_id=anti-fraud-20261017');
- assert.equal(sheet.rows[0].full_name,'王小明');assert.equal(sheet.rows[0].identity,'附近居民');assert.deepEqual(JSON.parse(sheet.rows[0].signature_json),signature);
+ assert.equal(sheet.rows[0].full_name,'王小明');assert.equal(sheet.rows[0].identity,ID_B);assert.deepEqual(JSON.parse(sheet.rows[0].signature_json),signature);
  const audit=e.sqlite.prepare('SELECT * FROM audit_logs').all();assert.doesNotMatch(JSON.stringify(audit),/王小明|signature_json/);
  await call(e,['checkin'],'POST','checkins/r1/undo');assert.equal(e.sqlite.prepare('SELECT count(*) n FROM checkin_attendees').get().n,0);
 });
@@ -116,10 +119,10 @@ test('以姓名搜尋僅回傳本場可報到名單且需報到權限',async()=>
 
 test('簽到表所有欄位與個別實收金額直接帶入，修改與無效資料不混淆場次定價',async()=>{
  const e=env();const r=await scan(e,'DN-0000000A');assert.equal(r.nickname,'暱稱r1');assert.equal(r.fee_snapshot,'免費');
- const people=[{age_group:'大',gender:'其他',identity:'社區住戶',fee_status:'paid',fee_amount:120,signature:[[[0.1,0.2],[0.2,0.3]]]},{age_group:'小',gender:'女',identity:'附近居民',fee_status:'free'}];
+ const people=[{age_group:'大',gender:'其他',identity:ID_A,fee_status:'paid',fee_amount:120,signature:[[[0.1,0.2],[0.2,0.3]]]},{age_group:'小',gender:'女',identity:ID_B,fee_status:'free'}];
  await call(e,['checkin'],'PUT','checkins/r1/attendees',{names:['甲','乙'],people});
  const rows=(await call(e,['export'],'GET','checkins/sheet?session_id=anti-fraud-20261017')).rows;
- assert.deepEqual(rows.map(p=>[p.full_name,p.age_group,p.gender,p.identity,p.fee_status,p.fee_amount]),[['甲','大','其他','社區住戶','paid',120],['乙','小','女','附近居民','free',null]]);
+ assert.deepEqual(rows.map(p=>[p.full_name,p.age_group,p.gender,p.identity,p.fee_status,p.fee_amount]),[['甲','大','其他',ID_A,'paid',120],['乙','小','女',ID_B,'free',null]]);
  for(const fee_amount of [-1,0.5,'20',1000001,null])await rejects(call(e,['checkin'],'PUT','checkins/r1/attendees',{names:['甲'],people:[{fee_status:'paid',fee_amount}]}),400);
  await rejects(call(e,['checkin'],'PUT','checkins/r1/attendees',{names:['甲'],people:[{fee_status:'unknown'}]}),400);
  const saved=await scan(e,'DN-0000000A');assert.equal(saved.people[0].fee_amount,120);assert.equal(saved.fee_snapshot,'免費');
@@ -134,7 +137,7 @@ async function onsiteEnv(capacity=10){
  e.sqlite.exec("UPDATE settings SET value='true' WHERE key='operating_ready'");
  await call(e,onsitePermissions,'PATCH','checkins/onsite',{session_id:'anti-fraud-20261017',enabled:true});
  const info=await call(e,onsitePermissions,'GET','checkins/onsite?session_id=anti-fraud-20261017');
- const body={session_id:'anti-fraud-20261017',form_id:info.form_id,privacy_version:info.privacy.version,privacy_consent:true,participation_consent:true,submission_id:crypto.randomUUID(),email:'onsite@example.test',names:['現場甲','現場乙'],people:[{age_group:'大',gender:'男',identity:'附近居民',signature:[[[0,0],[0.5,0.5]]],fee_status:'free'},{age_group:'小',gender:'女',identity:'社區住戶',signature:[[[0.2,0.3],[0.6,0.8]]],fee_status:'free'}]};
+ const body={session_id:'anti-fraud-20261017',form_id:info.form_id,privacy_version:info.privacy.version,privacy_consent:true,participation_consent:true,submission_id:crypto.randomUUID(),email:'onsite@example.test',names:['現場甲','現場乙'],people:[{age_group:'大',gender:'男',identity:ID_B,signature:[[[0,0],[0.5,0.5]]],fee_status:'free'},{age_group:'小',gender:'女',identity:ID_A,signature:[[[0.2,0.3],[0.6,0.8]]],fee_status:'free'}]};
  return {e,body};
 }
 
@@ -241,8 +244,8 @@ test('取消後重新報名可換筆跡，既有鍵盤姓名仍可報名',async(
 
 test('線上報名逐位填寫簽到欄位；伺服器驗證列數與選項，重試不覆寫，報名簽到單依名單帶入且排除候補',async()=>{
  const {e,body,send,signature}=await handwrittenEnv();const f=await publicForm(e,'anti-fraud-20261017');
- assert.deepEqual(f.form.participants.identities,['社區住戶','附近居民','其他']);assert.match(f.privacy.version,/signin-fields-v1$/);assert.match(f.privacy.body,/性別/);
- const participants=[{name:'',age_group:'大',gender:'女',identity:'附近居民'},{name:'小明',age_group:'小',gender:'男',identity:'社區住戶'}];
+ assert.deepEqual(f.form.participants.identities,site.identities);assert.match(f.privacy.version,/signin-fields-v1$/);assert.match(f.privacy.body,/性別/);
+ const participants=[{name:'',age_group:'大',gender:'女',identity:ID_B},{name:'小明',age_group:'小',gender:'男',identity:ID_A}];
  await rejects(send({...body,participants:participants.slice(0,1)}),400);
  await rejects(send({...body,participants:[participants[0],{...participants[1],name:''}]}),400);
  await rejects(send({...body,participants:[participants[0],{...participants[1],gender:'X'}]}),400);
@@ -256,8 +259,8 @@ test('線上報名逐位填寫簽到欄位；伺服器驗證列數與選項，�
  // r1 (confirmed, 2 seats) + r2 (pending, 1) + new registration (2); waitlisted r3 and cancelled r4 are excluded.
  assert.equal(sheet.registrations,3);assert.equal(sheet.rows.length,5);
  assert.deepEqual(sheet.rows.slice(0,3).map(x=>x.full_name),['暱稱r1','','暱稱r2']);
- const mine=sheet.rows.slice(3);assert.deepEqual(JSON.parse(mine[0].signature_json),signature);assert.equal(mine[0].full_name,'');assert.equal(mine[0].identity,'附近居民');
- assert.deepEqual({...mine[1]},{full_name:'小明',signature_json:null,age_group:'小',gender:'男',identity:'社區住戶',fee_snapshot:'免費'});
+ const mine=sheet.rows.slice(3);assert.deepEqual(JSON.parse(mine[0].signature_json),signature);assert.equal(mine[0].full_name,'');assert.equal(mine[0].identity,ID_B);
+ assert.deepEqual({...mine[1]},{full_name:'小明',signature_json:null,age_group:'小',gender:'男',identity:ID_A,fee_snapshot:'免費'});
  assert.equal(e.sqlite.prepare('SELECT count(*) n FROM checkins').get().n,0);
  assert.throws(()=>e.sqlite.exec("UPDATE registrations SET participants_json='{}' WHERE id='r1'"));
 });

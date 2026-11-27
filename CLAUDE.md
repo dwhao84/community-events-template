@@ -12,11 +12,11 @@
 
 本專案沒有建置步驟：`public/` 由 Workers Static Assets 直接提供，`src/` 是 Worker 程式。
 
-- `npm run check`（等同 `node scripts/check.mjs`）：語法檢查、全部單元測試、把 migration 套用到暫存 SQLite 並確認容量與每筆人次上限觸發器。需要 PATH 上有 `sqlite3`。
+- `npm run check`（等同 `node scripts/check.mjs`）：設定檔預檢（`scripts/config-check.mjs`，也可單獨 `npm run config:check`）、語法檢查、全部單元測試、把 migration 套用到暫存 SQLite 並確認容量與每筆人次上限觸發器。需要 PATH 上有 `sqlite3`。
 - 只跑單元測試：`npm test`；單一檔案：`node --test tests/admin-tools.test.mjs`。
-- 本機開發：`cp .dev.vars.example .dev.vars`，取消註解本機那三行（`APP_ENV`、`SITE_URL`、`LOCAL_ADMIN_TOKEN`），再執行 `npm run db:local`、`npm run dev`，開啟 <http://localhost:8787>；後台 `/admin/` 用 `LOCAL_ADMIN_TOKEN` 登入。
+- 本機開發：`npm run setup:local`（`.dev.vars` 不存在時自動產生、非互動套用本機 migration、`-- --with-sample` 匯入本機示範活動、`-- --no-dev` 不啟動）；手動做法是 `cp .dev.vars.example .dev.vars`，取消註解本機那三行（`APP_ENV`、`SITE_URL`、`LOCAL_ADMIN_TOKEN`），再執行 `npm run db:local`、`npm run dev`，開啟 <http://localhost:8787>；後台 `/admin/` 用 `LOCAL_ADMIN_TOKEN` 登入。
 - 整合測試（`check` 不會執行）：開著 `npm run dev`，執行 `TEST_ADMIN_TOKEN=<權杖> node tests/integration.mjs`。只能對本機執行，會在本機 D1 建立一個測試活動。
-- 部署：`npm run deploy`（`wrangler deploy` 後套用遠端 migration）。
+- 部署：`npm run deploy`（`wrangler deploy` 後套用遠端 migration）。第一次部署用 `npm run deploy:first`、報名防護用 `npm run setup:turnstile`；兩者都先 `--plan` 列清單，取得使用者同意後才加 `--yes`。
 
 ## Commit、push、PR
 

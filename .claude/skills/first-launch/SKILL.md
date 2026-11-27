@@ -21,6 +21,7 @@ description: 第一次上架：帶完全沒架過站的主辦方，從零把這�
 ## 全程必須遵守
 
 - **對外動作每次都先問。** 部署、遠端 migration、`wrangler secret put`、建立或刪除 Cloudflare 資源、`git push`、建立 GitHub repo，都要先說明「會發生什麼、能不能復原」，等對方回覆「同意」才執行。上一次的同意不適用於下一次。
+- **同一階段可以一次同意。** 第 5 關（第一次部署）和 C3（報名防護）各自有腳本，會把這一階段要做的事全部列出來（`--plan`）。把整份清單原樣給對方看，對方回覆一次「同意」，就用 `--yes` 連續做完這一階段；清單以外的事、或下一個階段，要重新問。腳本中途失敗時，先回報，不要自行換方法重試。
 - **秘密不經過對話。** AI 自己產生的秘密用管線直接交給 `wrangler secret put`。第三方給的秘密（Turnstile、Resend）請對方自己在終端機輸入；在 Claude Code 裡可以請對方在輸入框打 `! npx wrangler secret put <名稱>`。絕不請對方把秘密貼進對話。
 - **個資不寫進會提交的檔案。** 管理員 Email、`wrangler whoami` 顯示的帳號資料都屬於個資。
   - 管理員 Email 只用在 `ADMIN_BOOTSTRAP_EMAIL` 秘密和 Cloudflare Access 設定。
@@ -44,15 +45,19 @@ description: 第一次上架：帶完全沒架過站的主辦方，從零把這�
    - 執行 `git status --short` 和 `git remote -v`。
    - 有尚未提交的修改時，先問對方要保留還是另開分支，不要自行重設或覆寫。
    - 記下這個資料夾是模板原始 repo，還是對方自己的 repo（第 2 關選部署方式時會用到）。
-2. **Cloudflare 登入狀態**
+2. **先確認工具已安裝**（後面所有 `npx wrangler` 都用專案內的版本）
+   - 執行 `node -v`（需要 22.13 以上），並檢查 `node_modules/.bin/wrangler` 是否存在。
+   - 不存在時先執行 `npm install`（只下載套件到這個資料夾，不碰雲端）。沒有先安裝就跑 `npx wrangler`，會去網路下載另一個版本，或停在安裝確認。
+   - 沒有 Node.js：交接 A2，先不要往下做。
+3. **Cloudflare 登入狀態**
    - 執行 `npx wrangler whoami`。
    - 還沒登入：先不登入，等第 2 關選完部署方式再處理（對應 A3）。
    - 有多個帳號：請對方指定要用哪一個。
    - 回覆時只說「已登入」以及帳號數量，不要複述 Email。
-3. **找找看有沒有同名的網站或資料庫**（已登入時才做）
-   - 執行 `npx wrangler deployments list`，查 `wrangler.jsonc` 的 `name` 是否已有網站。
-   - 執行 `npx wrangler d1 list`，查有沒有和 `database_name` 同名的資料庫。
-4. **判斷結果**
+4. **找找看有沒有同名的網站或資料庫**（已登入時才做）
+   - 執行 `npm run deploy:first -- --plan`。它只讀資料：跑 `npm run check`，再查帳號裡有沒有和 `wrangler.jsonc` 同名的 Worker、D1、R2，以及 R2 是否已啟用，不會做任何變更。
+   - 這時 `wrangler.jsonc` 的名稱多半還是模板預設值；第 4 關改名後，第 5 關會再查一次。
+5. **判斷結果**
    - 都不存在：確實是第一次，進入第 1 關。
    - 已經有同名的網站或資料庫：**停下來**。告訴對方「這個帳號上已經有同名的網站／資料庫」，請對方確認是不是自己之前架過的。如果是，改走一般更新流程，不用這個 skill。
    - 帳號裡有名稱相近、但可能屬於其他專案的資源：**不得碰它**，也不要猜它和這個模板的關係。直接列出名稱，請對方說明。
@@ -68,7 +73,14 @@ description: 第一次上架：帶完全沒架過站的主辦方，從零把這�
   - 啟用 R2 時，Cloudflare 可能要求綁定付款方式。
 - **哪些時候會停下來問**：每次部署、設定秘密、建立雲端資源之前。
 
-最後問對方：「準備好了嗎？要不要先從填社區內容開始？」
+接著讓對方選擇節奏（記到進度檔）：
+
+- **快速開站**（想今天就上線）：第 3 關只問 3 個必填——社區／網站名稱、Worker 名稱、第一位管理員 Email。其他欄位先用模板預設，上線後在後台改（配色、關於我們、Banner 都能在後台改）。
+- **逐項引導**（想一次把內容填完整）：第 3 關依 `MY-COMMUNITY.md` 逐節問。
+
+兩種都會經過同樣的安全關卡（後台登入、報名防護、個資告知），差別只在第 3 關問多少。
+
+最後問對方：「準備好了嗎？要用哪一種？」
 
 ## 第 2 關：選部署方式（A4）
 
@@ -83,6 +95,16 @@ description: 第一次上架：帶完全沒架過站的主辦方，從零把這�
 把選擇記到進度檔。選命令列時，接著做 A2（工具）和 A3（`npx wrangler login`，對方要在瀏覽器按 Allow）。
 
 ## 第 3 關：問答填好 `MY-COMMUNITY.md`（A1）
+
+**快速開站模式**：一則訊息問完這 3 題，就跳到第 4 項的格式檢查：
+
+1. 社區名稱與網站名稱（例如「幸福社宅」「幸福社區活動」）。網站名稱沒給就用「<社區名稱>活動報名」；標誌字預設取網站名稱第一個字。
+2. Worker 名稱（英文小寫、數字和 `-`，例如 `happy-events`；也會成為網址的一部分）。
+3. 第一位管理員 Email（只留在對話，不寫進檔案）。
+
+其他欄位用模板預設值，`○○` 這類預留文字換成社區名稱。告訴對方哪些欄位用了預設、之後在後台哪裡改；`npm run config:check` 會列出還有 `○○` 的欄位。
+
+**逐項引導模式**：
 
 1. 先讀 `MY-COMMUNITY.md`，把已經填好的欄位列出來，請對方確認。
 2. 對空白的欄位，依檔案裡的章節順序發問：
@@ -101,38 +123,36 @@ description: 第一次上架：帶完全沒架過站的主辦方，從零把這�
 
 依 community-setup 第 1–4 步執行：
 
-1. `npm install`，再執行 `node scripts/check.mjs`，確認一開始就是全部通過。
+1. 執行 `npm run check`，確認一開始就是全部通過（第 0 關已經 `npm install`）。
 2. 依對照表寫入 `site.config.json`、`public/site.webmanifest` 和 `wrangler.jsonc`。
    - `name`、`database_name`、`bucket_name` 使用同一個前綴。
    - **不要填 `database_id`。**
-3. 再執行一次 `node scripts/check.mjs`。
-4. 在本機預覽：
-   - 準備 `.dev.vars`。如果檔案已經存在，先問對方，不得覆寫。
-   - 執行 `npm run db:local`，然後 `npm run dev`。
+3. 再執行一次 `npm run check`。它會先跑設定預檢（`scripts/config-check.mjs`），Worker 名稱、`SITE_URL`、標誌字、配色等格式錯誤會直接列出；照訊息跟對方確認後修正。
+4. 在本機預覽：執行 `npm run setup:local -- --with-sample`。
+   - 它會檢查工具、在 `.dev.vars` 不存在時自動產生本機用的隨機值（已存在就不動），不經確認套用本機資料庫，並加入一個「【示範】」活動（兩個未來場次），讓首頁不是空白。全部只寫在這台電腦的 `.wrangler/`，不碰正式網站。
+   - 本機後台登入權杖在 `.dev.vars` 的 `LOCAL_ADMIN_TOKEN`；請對方自己打開檔案複製，不要把它貼進對話。
    - 如果 8787 埠已被占用，先問對方，不要自行關掉別的程式。
+   - 示範活動不會被部署。對方想在本機刪掉它，可以在本機後台刪除。
 5. 請對方打開首頁、`/about.html`、`/admin/`，確認名稱和文字都正確。
 
 **停下來**，等對方說「沒問題」再進第 5 關。
 
 ## 第 5 關：第一次部署（B1–B3）
 
-1. **部署前**
-   - 說明這一步會在對方的 Cloudflare 帳號建立網站、D1 資料庫和 R2 圖片空間，並套用資料庫結構。
-   - 部署本身可以用舊版本回復，但已建立的資料庫和圖片空間要另外手動刪除。
-   - 取得同意後才執行。
-2. **執行部署**
-   - 執行 `npm run deploy`。
-   - 如果 R2 尚未啟用而失敗：交接 A3 第 4 點，請對方到儀表板啟用 R2，回報後再重試。
-3. **記錄結果**：新版本 ID 與網址記到進度檔。
-4. **設定秘密**（依 B3，先取得同意）
-   - 設定 `RATE_SALT`、`FEEDBACK_TOKEN_SECRET`、`ADMIN_BOOTSTRAP_EMAIL`。
-   - 執行 `npx wrangler secret list` 確認三個名稱都在（這個指令只顯示名稱）。
-5. **填入正式網址**
-   - 把網址填進 `wrangler.jsonc` 的 `SITE_URL`。
-   - 經同意後再部署一次。
-6. **確認上線**
-   - 用 `curl -sI <SITE_URL>` 確認回應是 200，而且有 `Content-Security-Policy` 標頭。
-   - 確認首頁看得到網站。
+命令列部署用 `npm run deploy:first`，一次同意就連續做完。選 Deploy 按鈕的，依 community-setup 第 5 步 A 進行，不用這支腳本。
+
+1. **列出清單**：執行 `npm run deploy:first -- --plan --admin-email <管理員 Email>`。
+   - 只讀不改：跑檢查、確認登入帳號、確認沒有同名 Worker／D1／R2、確認 R2 已啟用。
+   - 有同名資源、R2 未啟用、多個帳號時，腳本會停下並說明怎麼做（R2 未啟用就交接 A3 第 4 點）。照訊息處理，不要自行刪資源或改名繞過。
+2. **取得一次同意**：把腳本列出的 a–e 原樣給對方看，並補充：部署可以用舊版本回復，但建立好的資料庫和圖片空間要另外手動刪除。對方回覆「同意」後才往下。
+3. **執行**：`npm run deploy:first -- --yes --admin-email <管理員 Email>`。它會依序：
+   - 部署並自動建立 D1、R2；套用遠端 migration；
+   - 產生 `RATE_SALT`、`FEEDBACK_TOKEN_SECRET`（已存在就不改），連同 `ADMIN_BOOTSTRAP_EMAIL` 經 stdin 寫入秘密，不會顯示；
+   - 把 workers.dev 網址回填到 `wrangler.jsonc` 的 `SITE_URL` 並再部署一次；
+   - 檢查首頁 200 與 CSP、HSTS、X-Content-Type-Options。
+4. **記錄結果**：腳本會把版本 ID、網址與檢查結果寫進 `.local/deploy-log.md`（不含秘密）；把網址與版本也記到進度檔。
+5. **中途失敗**：照腳本的訊息回報對方。腳本會說明是否可以加 `--reuse-existing` 重跑（D1／R2 已建立但 Worker 沒部署成功時）；不確定就先問。
+6. 請對方打開網址，確認首頁看得到網站。`wrangler.jsonc` 的 `SITE_URL` 有變更，之後記得 commit。
 
 想用自訂網域時（B2），在這一關之前或之後插入都可以；依 manual-handoffs 的 B2 帶對方設定。
 
@@ -146,10 +166,11 @@ description: 第一次上架：帶完全沒架過站的主辦方，從零把這�
 - **C2 第一次登入**
   - 請對方用管理員 Email 打開 `/admin/` 並回報結果。
   - AI 不得自己嘗試登入。
-- **C3 Turnstile**
-  - Site Key 由 AI 寫進 `wrangler.jsonc`。
-  - Secret Key 請對方自己用 `wrangler secret put` 輸入。
-  - 經同意後部署，再用 `curl -sI` 確認 CSP 含 `challenges.cloudflare.com`。
+- **C3 Turnstile**：用 `npm run setup:turnstile`。
+  - 先執行 `npm run setup:turnstile -- --plan`，把清單給對方看，同意後加 `--yes` 執行。
+  - 腳本先試著用 Cloudflare API 建立 widget，Site Key 自動寫進 `wrangler.jsonc`、Secret Key 直接寫入秘密，兩把鑰匙都不經過對話。
+  - API 權限不足時，腳本會印出儀表板連結和要填的網域。請對方建好 widget 後把 **Site Key**（公開值）貼給你，再執行 `npm run setup:turnstile -- --site-key <Site Key> --yes`；腳本會提示對方自己在終端機輸入 Secret Key（Claude Code 可請對方在輸入框打 `! npx wrangler secret put TURNSTILE_SECRET_KEY`）。
+  - 兩把鑰匙到位後，腳本會重新部署，並確認 CSP 含 `challenges.cloudflare.com`。
   - 驗收時不送出報名。
   - 對方決定先不設定時：在進度檔記為「使用者決定略過」，並在最後回報中列為「尚未完成的安全設定」。
 

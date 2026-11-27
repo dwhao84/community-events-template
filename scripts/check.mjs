@@ -5,8 +5,9 @@ import {join} from 'node:path';
 
 const root=new URL('..',import.meta.url).pathname;
 const node=process.execPath;
+execFileSync(node,[join(root,'scripts','config-check.mjs')],{stdio:'inherit'});
 function files(dir){return readdirSync(join(root,dir)).flatMap(name=>{const path=join(root,dir,name);return statSync(path).isDirectory()?[]:[path];});}
-for(const file of [...files('src'),...files('public'),...files('public/admin')].filter(x=>x.endsWith('.js')))execFileSync(node,['--check',file],{stdio:'inherit'});
+for(const file of [...files('src'),...files('scripts'),...files('public'),...files('public/admin')].filter(x=>/\.m?js$/.test(x)))execFileSync(node,['--check',file],{stdio:'inherit'});
 execFileSync(node,[join(root,'scripts','themes.mjs'),'--check'],{stdio:'inherit'});
 execFileSync(node,['--test',...readdirSync(join(root,'tests')).filter(name=>name.endsWith('.test.mjs')).map(name=>join(root,'tests',name))],{stdio:'inherit'});
 

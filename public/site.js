@@ -21,4 +21,12 @@ export async function applySite(root=document){
    a.innerHTML='<span class="mascot-link-icon" aria-hidden="true">↗</span><span><strong></strong><small></small></span><b aria-hidden="true">↗</b>';a.querySelector('strong').textContent=l.label;a.querySelector('small').textContent=l.note||'';return a;}));}
  return c;
 }
+// Menu tab for the organizer-defined page (/page.html): label and visibility are set in the admin (自訂頁面) and apply on every page.
+export async function applyCustomPageTab(){
+ const tabs=document.querySelectorAll('[data-custom-page]');if(!tabs.length)return;
+ try{const r=await fetch('/api/page',{credentials:'same-origin'});if(!r.ok)return;const p=await r.json();const title=typeof p.title==='string'?p.title.trim():'';
+  for(const a of tabs){const own=a.getAttribute('aria-current')==='page';a.hidden=!(title&&(p.show_link===true||own));const t=a.querySelector('[data-custom-page-title]')||a;if(title)t.textContent=title;}
+ }catch{/* tabs stay hidden */}
+}
 if(!document.querySelector('script[data-site-manual]'))applySite();
+applyCustomPageTab();
