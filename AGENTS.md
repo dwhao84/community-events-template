@@ -15,9 +15,9 @@
 | 範圍 | 主要入口與責任 |
 | --- | --- |
 | 在地內容 | `site.config.json`：社區名稱、品牌、標語、外部連結、參加者身分選項、信件署名；由 `src/site.js` 讀取，前端經 `/site-config.json` 與 `public/site.js` 套用。 |
-| 居民網站 | `public/index.html`、`public/app.js`、`public/styles.css`：主視覺（由後台 Banner 產生）、活動卡片、收費標示、加入行事曆、報名與響應式排版；`public/about.html`、`public/about.js`：區塊式「關於我們」。 |
+| 居民網站 | `public/index.html`、`public/app.js`、`public/styles.css`：主視覺（由後台 Banner 產生）、活動卡片、收費標示、加入行事曆、報名與響應式排版；`public/about.html`、`public/about.js`：區塊式「關於我們」；`public/page.html`、`public/page.js`：主辦方自訂頁面（名稱即選單分頁，由後台決定是否顯示；舊網址 `/safety.html` 轉址到此），兩者共用 `public/blocks.js` 的區塊呈現。 |
 | 共用介面邏輯 | `public/shared.js`：API 呼叫、欄位呈現、答案讀取及顯示工具；變更時檢查居民端與後台的使用處。 |
-| 管理後台 | `public/admin/`：活動、場次、報名、照片及其他管理操作；`public/admin/tools.js`：新增活動精靈、隱藏／刪除／復原、代填與刪除報名者、統計、首頁 Banner、關於我們編輯器。 |
+| 管理後台 | `public/admin/`：活動、場次、報名、照片及其他管理操作；`public/admin/tools.js`：新增活動精靈、隱藏／刪除／復原、代填與刪除報名者、統計、首頁 Banner、關於我們與自訂頁面編輯器（儲存即生效，不需部署）。 |
 | 路由與安全標頭 | `src/worker.js`：靜態檔案、API、媒體路由、安全標頭與排程入口。 |
 | 業務與權限 | `src/api.js`、`src/admin-tools.js`、`src/lib.js`、`src/auth.js`：報名規則、收費與人次上限、資料驗證、管理員驗證（含 `ADMIN_BOOTSTRAP_EMAIL` 首位管理員）與模組授權。 |
 | 行事曆 | `src/calendar.js`：公開 `.ics` 與 Google 日曆連結，不含任何報名者資料。 |
@@ -31,7 +31,7 @@
 
 - 社區專屬文字不得寫死在程式或 HTML；放進 `site.config.json`，或讓主辦方在後台編輯（活動、Banner、關於我們、個資告知）。HTML 只保留中性的預設文字。
 - 首頁 Banner 與「關於我們」的圖片存於 R2 的 `site/`，與活動照片 `photos/` 分開；刪除 Banner 只移除不再被引用的 `site/` 圖檔。
-- 「關於我們」區塊只接受固定類型與欄位；前端一律以 textContent 呈現，連結只允許 https:、/、mailto:、tel:。不得為了版面加入 inline style 或放寬 CSP。
+- 「關於我們」與「自訂頁面」區塊只接受固定類型與欄位；前端一律以 textContent 呈現，連結只允許 https:、/、mailto:、tel:。不得為了版面加入 inline style 或放寬 CSP。
 - 隱藏活動不等於取消：隱藏只從前台與報名 API 消失，既有報名與通知照常；取消活動才會取消提醒信。刪除為軟刪除，可復原，且不刪報名資料。
 - 網站配色由 Worker 依設定動態產生 `/theme.css`（`src/theme-css.js`、`src/themes.js`）。`public/styles.css` 中的藍、綠色系一律使用既有變數或 `var(--c-<hex>)`；新增這類色碼後執行 `node scripts/themes.mjs` 更新 `src/theme-shades.json`（`check` 會檢查是否過期）。新增預設配色須通過對比檢查（按鈕白字與深色標題 ≥ 4.5、內文 ≥ 7）。
 - 網站圖示由後台上傳，存為 512 與 180 的 PNG，取代所有 favicon 路徑；`public/favicon*` 只是預設值。

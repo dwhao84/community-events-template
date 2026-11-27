@@ -232,3 +232,5 @@ body:not(.resource-page)>footer{display:grid;grid-template-columns:1fr 1fr;gap:4
 @media(max-width:900px){.about-cards,.about-cards.cols-4{grid-template-columns:repeat(2,minmax(0,1fr))}.about-image-text{grid-template-columns:1fr}.about-image-text.image-right .about-figure{order:0}}
 @media(max-width:680px){.about-cards,.about-cards.cols-2,.about-cards.cols-4{grid-template-columns:1fr}.banner-media{margin:12px 12px 8px;border-radius:16px}.banner-media img.is-portrait{max-height:70vh}.hero-text{padding:40px 20px 48px}}
 .hero-carousel-controls[hidden]{display:none}
+/* Menu tab for the organizer-defined page stays hidden until the admin turns it on (component link styles would otherwise show it). */
+a[data-custom-page][hidden],.site-header #site-nav a[data-custom-page][hidden],body>footer>a[data-custom-page][hidden]:not(.brand){display:none}

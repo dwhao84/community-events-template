@@ -5,7 +5,7 @@ import {media} from './photos.js';
 import {webhook,processJobs} from './mail.js';
 import {feedbackPublic} from './feedback.js';
 import {publicSite} from './site.js';
-import {calendarFile,publicAbout,siteImageMedia} from './admin-tools.js';
+import {calendarFile,publicAbout,publicBlocks,siteImageMedia} from './admin-tools.js';
 import {siteAppearanceCSS,siteIcon} from './admin-tools.js';
 import {turnstileSiteKey,turnstileOrigin} from './turnstile.js';
 const iconPaths=['/favicon.ico','/favicon.svg','/favicon-192.png','/favicon-512.png','/apple-touch-icon.png'];
@@ -57,6 +57,7 @@ export async function handle(req,env) {
    const b=hasBody?await jsonBody(req):{};
    if(url.pathname==='/api/public'&&method==='GET')return secure(response(await publicData(env)),true);
    if(url.pathname==='/api/about'&&method==='GET')return secure(response(await publicAbout(env.DB)),true);
+   if(url.pathname==='/api/page'&&method==='GET')return secure(response(await publicBlocks(env.DB,'page')),true);
    if(p[1]==='sessions'&&p[3]==='calendar.ics'&&p.length===4&&method==='GET')return secure(await calendarFile(env,p[2],url.origin),true);
    if(p[1]==='sessions'&&p[3]==='form'&&method==='GET')return secure(response(await publicForm(env,p[2])),true);
    if(p[1]==='sessions'&&p[3]==='registrations'&&method==='POST')return secure(response(await register(req,env,p[2],b),201),true);
@@ -70,6 +71,8 @@ export async function handle(req,env) {
   if(p[0]==='admin'&&p[1]==='feedback'&&method==='GET')return secure(await env.ASSETS.fetch(new Request(new URL('/admin/',url),{headers:req.headers})));
   // /feedback/:slug and /feedback/:slug/success share one static page; analytics is never loaded there.
   if((p[0]==='feedback'||p[0]==='feedback.html')&&p.length<=3&&method==='GET')return private_(secure(await env.ASSETS.fetch(new Request(new URL('/feedback',url),{headers:req.headers}))));
+  // The organizer-defined page used to live at /safety.html; keep old links working.
+  if(method==='GET'&&url.pathname==='/safety.html')return secure(Response.redirect(new URL('/page.html',url),301));
   if(method==='GET'&&url.pathname==='/admin/*'&&url.searchParams.get('__cf_access_message')==='logged_out')return secure(Response.redirect(new URL('/admin/',url),302));
   const asset=secure(await env.ASSETS.fetch(req));
   if(url.pathname==='/'||url.pathname==='/index.html')asset.headers.set('Content-Security-Policy',homeCSP(env));

@@ -15,9 +15,9 @@ const kindWhen={receipt:'居民送出報名後寄出；不代表名額已確認�
 function confirmAction({title,body,action,danger}){return new Promise(resolve=>{confirmDialog.innerHTML=`<h2 id="confirm-title">${esc(title)}</h2><div class="confirm-body">${body}</div><div class="editor-actions"><button class="button${danger?' danger':''}" type="button" data-answer="yes">${esc(action)}</button><button class="button secondary" type="button" data-answer="no">返回，不要變更</button></div>`;const done=v=>{confirmDialog.onclose=null;if(confirmDialog.open)confirmDialog.close();resolve(v);};for(const b of confirmDialog.querySelectorAll('[data-answer]'))b.onclick=()=>done(b.dataset.answer==='yes');confirmDialog.onclose=()=>resolve(false);confirmDialog.showModal();confirmDialog.querySelector('[data-answer=no]').focus();});}
 async function busy(b,fn){const group=[...(b.closest('.editor-actions,form')?.querySelectorAll('button')||[b])],label=b.textContent;for(const x of group)x.disabled=true;b.textContent='處理中…';try{return await fn();}finally{for(const x of group)x.disabled=false;b.textContent=label;}}
 let me,events=[],sessions=[],current='events',leave=null;
-const labels={events:'活動與場次',registrations:'報名名單',checkin:'現場報到',stats:'活動統計',photos:'活動照片',banners:'首頁 Banner',about:'關於我們頁面',appearance:'網站外觀',notifications:'通知中心',feedback:'課程回饋',admins:'營運設定'};
+const labels={events:'活動與場次',registrations:'報名名單',checkin:'現場報到',stats:'活動統計',photos:'活動照片',banners:'首頁 Banner',about:'關於我們頁面',page:'自訂頁面',appearance:'網站外觀',notifications:'通知中心',feedback:'課程回饋',admins:'營運設定'};
 // Pages that are not modules themselves use an existing module permission (the server checks the same one).
-const pageModule={stats:'events',banners:'photos',about:'events',appearance:'admins'};const canSee=key=>me.permissions.includes(pageModule[key]||key);
+const pageModule={stats:'events',banners:'photos',about:'events',page:'events',appearance:'admins'};const canSee=key=>me.permissions.includes(pageModule[key]||key);
 const ctx=()=>({openEditor,dialog,confirmAction,busy,reload:()=>show(current),editSession});
 const localValue=v=>v?new Date(new Date(v).getTime()+8*3600000).toISOString().slice(0,16):'';
 const utcValue=v=>v?new Date(v+':00+08:00').toISOString():null;
@@ -36,7 +36,7 @@ async function start(){
 }
 function renderNav(){nav.innerHTML=Object.entries(labels).filter(([key])=>canSee(key)).map(([key,label])=>`<button data-page="${key}" class="${key===current?'active':''}">${label}</button>`).join('');for(const b of nav.querySelectorAll('button'))b.onclick=()=>show(b.dataset.page);}
 async function loadBase(){events=await api('/api/admin/events');sessions=await api('/api/admin/sessions');}
-async function show(page){leave?.();leave=null;current=page;title.textContent=labels[page];renderNav();content.innerHTML='<p class="loading">載入中…</p>';try{await ({events:showEvents,registrations:showRegistrations,checkin:showCheckin,photos:showPhotos,notifications:showNotifications,feedback:showFeedback,admins:showSettings,stats:()=>statsPage(content,me),banners:()=>bannersPage(content,ctx()),about:async()=>{leave=await aboutEditor(content,ctx());},appearance:async()=>{leave=await appearancePage(content,ctx());}}[page]||showEvents)();}catch(e){content.innerHTML=`<p class="error">${esc(e.message)}</p>`;}}
+async function show(page){leave?.();leave=null;current=page;title.textContent=labels[page];renderNav();content.innerHTML='<p class="loading">載入中…</p>';try{await ({events:showEvents,registrations:showRegistrations,checkin:showCheckin,photos:showPhotos,notifications:showNotifications,feedback:showFeedback,admins:showSettings,stats:()=>statsPage(content,me),banners:()=>bannersPage(content,ctx()),about:async()=>{leave=await aboutEditor(content,ctx());},page:async()=>{leave=await aboutEditor(content,ctx(),'page');},appearance:async()=>{leave=await appearancePage(content,ctx());}}[page]||showEvents)();}catch(e){content.innerHTML=`<p class="error">${esc(e.message)}</p>`;}}
 
 let showDeleted=false;
 async function showEvents(){

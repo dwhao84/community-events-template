@@ -7,7 +7,7 @@ import {feedbackAdmin} from './feedback.js';
 import {feedbackKinds} from './feedback-core.js';
 import {site} from './site.js';
 import {turnstileSiteKey,verifyTurnstile} from './turnstile.js';
-import {feeInput,seatLimitInput,quickEvent,duplicateEvent,setHidden,deleteEvent,restoreEvent,addRegistration,purgeRegistration,stats,statsCSV,uploadSiteImage,bannersAPI,publicBanners,aboutAPI,appearanceAPI} from './admin-tools.js';
+import {feeInput,seatLimitInput,quickEvent,duplicateEvent,setHidden,deleteEvent,restoreEvent,addRegistration,purgeRegistration,stats,statsCSV,uploadSiteImage,bannersAPI,publicBanners,aboutAPI,blockPageAPI,customPageMeta,appearanceAPI} from './admin-tools.js';
 const requiredRow=async(db,table,id)=>{const row=await one(db,`SELECT * FROM ${table} WHERE id=?`,id);if(!row)fail(404,'找不到資料');return row;};
 const sessionQuery=`SELECT s.*,COALESCE(s.form_id,e.default_form_id) active_form_id,COALESCE((SELECT SUM(seats) FROM registrations r WHERE r.session_id=s.id AND r.status IN('pending','confirmed')),0) occupied,(SELECT COUNT(*) FROM registrations r WHERE r.session_id=s.id AND r.status='waitlisted') waitlisted FROM event_sessions s JOIN events e ON e.id=s.event_id`;
 // Home page order: events with an upcoming (not yet ended, published) session first, soonest first; then past events, most recent first.
@@ -24,7 +24,7 @@ export async function publicData(env) {
   for(const s of e.sessions){if(!e.photos.some(p=>p.id===s.cover_photo_id))s.cover_photo_id=null;delete s.form_id;}
  }
  sortByDate(events);
- return {brand:cfg.brand,english_brand:cfg.english_brand,events,banners:await publicBanners(env.DB),privacy:{version:cfg.privacy_version,summary:cfg.privacy_summary,body:cfg.privacy_body,statement:cfg.participation_statement}};
+ return {brand:cfg.brand,english_brand:cfg.english_brand,events,banners:await publicBanners(env.DB),custom_page:customPageMeta(cfg),privacy:{version:cfg.privacy_version,summary:cfg.privacy_summary,body:cfg.privacy_body,statement:cfg.participation_statement}};
 }
 const participantRowLimit=100,ageGroups=['大','小'],genders=['男','女','其他'],identities=site.identities;
 // Optional for older clients; when sent, one row per seat (capped) so the sign-in sheet matches the paper form.
@@ -283,6 +283,7 @@ export async function adminAPI(req,env,admin,url,parts,b) {
  if(resource==='site-images'){need('photos');if(method!=='POST'||id)fail(405,'不支援此方法');return uploadSiteImage(req,env,admin,url);}
  if(resource==='banners'){need('photos');return bannersAPI(req,env,admin,url,method,id,action,b);}
  if(resource==='about'){need('events');if(method!=='GET'&&method!=='PUT')fail(405,'不支援此方法');return aboutAPI(db,admin,method,b);}
+ if(resource==='page'){need('events');if(method!=='GET'&&method!=='PUT')fail(405,'不支援此方法');return blockPageAPI(db,admin,'page',method,b);}
  if(resource==='feedback')return feedbackAdmin(req,env,admin,url,parts,b,need);
  if(resource==='photos'){
   need('photos');if(method==='GET'){if(action==='media')return media(req,env,id,true);return all(db,'SELECT * FROM event_photos WHERE event_id=? ORDER BY sort_order,created_at',url.searchParams.get('event_id'));}
