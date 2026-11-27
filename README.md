@@ -27,6 +27,30 @@
 - Email 通知（選用）：收件、確認、行前提醒、取消；課程回饋問卷。
 - 權限分模組：活動、報名、報到、照片、通知、匯出、回饋、管理員。
 
+## 首頁畫面
+
+住戶打開網站看到的第一頁：上方是後台上傳的 Banner（可連到活動），下面是活動卡片，顯示日期、時間、地點、收費與剩餘名額。
+
+<table>
+<tr>
+<td width="62%" valign="top"><img src="docs/images/home/home.jpg" alt="首頁電腦版：Banner 與活動列表" width="500"><br><b>電腦版</b></td>
+<td width="38%" valign="top"><img src="docs/images/home/home-mobile.jpg" alt="首頁手機版：Banner 與活動列表" width="260"><br><b>手機版</b><br>導覽收進「選單」，活動卡片改成單欄，報名按鈕放大成整行。</td>
+</tr>
+</table>
+
+### 報名表
+
+按「我要報名」會打開報名表。範例的姓名欄使用手寫板（適合長輩或現場平板），也可以改用鍵盤輸入。
+
+<table>
+<tr>
+<td width="62%" valign="top"><img src="docs/images/home/form.jpg" alt="電腦版的報名表視窗" width="500"><br><b>電腦版</b></td>
+<td width="38%" valign="top"><img src="docs/images/home/form-mobile.jpg" alt="手機版的報名表視窗" width="260"><br><b>手機版</b></td>
+</tr>
+</table>
+
+截圖只拍到頁面上半部。活動、Banner 與報名人數都是虛構的示範資料；為了不擋住內容，整頁截圖隱藏了右下角的「社區小幫手」。
+
 ## 網站配色
 
 內建 10 組配色，主辦方可以在後台「網站外觀」隨時切換，也可以自訂五個顏色。標題、按鈕、標籤與卡片底色都會一起改變；所有預設配色都通過文字對比檢查（按鈕與標題 4.5:1、內文 7:1 以上）。下面是各配色的活動列表畫面。
