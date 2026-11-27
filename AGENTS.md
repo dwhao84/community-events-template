@@ -1,6 +1,6 @@
 # 社區活動報名模板：開發與跨裝置規範
 
-本檔是所有 AI 程式助理（Claude Code、Codex、Gemini CLI 等）與開發者共用的唯一規範；`CLAUDE.md` 與 `GEMINI.md` 只是匯入本檔。要把模板設定成自己的社區，請依 `.agents/skills/community-setup/SKILL.md`（與 `.claude/skills/` 同內容）的流程進行；第一次上架、需要從頭一步步帶著做時，依 `.agents/skills/first-launch/SKILL.md`（先確認不會蓋到既有網站，問答填好 `MY-COMMUNITY.md`，再照 community-setup 逐關完成）。日常活動管理也有對應流程：新增、隱藏活動依 `.agents/skills/manage-events/SKILL.md`；調整場次（開放／截止報名、改時間地點名額、取消）依 `.agents/skills/update-sessions/SKILL.md`；寫宣傳文案依 `.agents/skills/event-promo/SKILL.md`；產生成果報告依 `.agents/skills/event-report/SKILL.md`。
+本檔是所有 AI 程式助理（Claude Code、Codex、Gemini CLI 等）與開發者共用的唯一規範；`CLAUDE.md` 與 `GEMINI.md` 只是匯入本檔。要把模板設定成自己的社區，請依 `.agents/skills/community-setup/SKILL.md`（與 `.claude/skills/` 同內容）的流程進行；第一次上架、需要從頭一步步帶著做時，依 `.agents/skills/first-launch/SKILL.md`（先確認不會蓋到既有網站，問答填好 `MY-COMMUNITY.md`，再照 community-setup 逐關完成）。日常活動管理也有對應流程：新增、隱藏活動依 `.agents/skills/manage-events/SKILL.md`；調整場次（開放／截止報名、改時間地點名額、取消）依 `.agents/skills/update-sessions/SKILL.md`；寫宣傳文案依 `.agents/skills/event-promo/SKILL.md`；產生成果報告依 `.agents/skills/event-report/SKILL.md`；commit、push、開 PR、merge 回 main 依 `.agents/skills/git-workflow/SKILL.md`。
 
 本檔適用於整個專案。修改介面時，須同時考慮居民網站與受影響的管理後台；以下是後續實作與驗收規則，不表示目前每個頁面都已符合。
 

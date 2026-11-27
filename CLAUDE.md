@@ -18,6 +18,10 @@
 - 整合測試（`check` 不會執行）：開著 `npm run dev`，執行 `TEST_ADMIN_TOKEN=<權杖> node tests/integration.mjs`。只能對本機執行，會在本機 D1 建立一個測試活動。
 - 部署：`npm run deploy`（`wrangler deploy` 後套用遠端 migration）。
 
+## Commit、push、PR
+
+使用 `git-workflow` skill（`.claude/skills/git-workflow/SKILL.md`）：從 main 開分支、依功能拆 commit、提交前掃描秘密與個資、開 PR、等 GitGuardian 通過才 merge，最後回到 main 並清掉分支。
+
 ## 程式風格
 
 原始碼採精簡寫法（長的單行函式、極少空白）。修改時延續周圍的風格，不要重新排版整個檔案。居民看到的文字使用繁體中文。
