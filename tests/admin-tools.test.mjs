@@ -8,6 +8,7 @@ import {sessionICS,fold,icsEscape,googleCalendarURL} from '../src/calendar.js';
 import {bootstrapAdmin} from '../src/auth.js';
 import {handle} from '../src/worker.js';
 import {payloadFor,jobEligible} from '../src/mail.js';
+import {site} from '../src/site.js';
 
 // In-memory D1 with every migration, an R2 stub and two future sessions (dates are set by the test, not by real events).
 const migrations=new URL('../migrations/',import.meta.url);
@@ -231,7 +232,8 @@ test('網站配色：預設維持原色；預設與自訂配色可切換；對�
  assert.match(themeCSS('forest'),/--blue:#2f855a/);assert.doesNotMatch(themeCSS('forest'),/--c-dff4ff:#dff4ff/);
  for(const t of themes)assert.deepEqual(paletteProblems(t),[],t.id);
  const e=env();const css=async(q='')=>{const r=await handle(new Request('https://events.example.org/theme.css'+q),e);assert.match(r.headers.get('content-type'),/text\/css/);return r.text();};
- assert.match(await css(),/site colors: ocean/);
+ const stock=themes.find(t=>t.id===site.theme)?.id||themes[0].id;// default follows site.config.json theme
+ assert.match(await css(),new RegExp(`site colors: ${stock}`));
  assert.equal((await call(e,'GET','appearance')).presets.length,themes.length);
  await call(e,'PUT','appearance',{theme:'sakura'});assert.match(await css(),/site colors: sakura/);
  await rejects(call(e,'PUT','appearance',{theme:'neon'}),400);
@@ -241,7 +243,7 @@ test('網站配色：預設維持原色；預設與自訂配色可切換；對�
  await call(e,'PUT','appearance',{theme:good});const c=await css();assert.match(c,/site colors: custom/);assert.match(c,/--green:#15803d/);
  assert.match(await css('?preview=1&theme=night'),/^\/\* site colors: night \*\/\n\.theme-preview\{/);
  assert.match(await css('?preview=1&theme=ocean'),/\.theme-preview\{[^}]*--blue:#0769c8/,'preview of the default still sets explicit colors');
- assert.match(await css('?preview=1&brand=%23000000'),/site colors: ocean|\.theme-preview/);
+ assert.match(await css('?preview=1&brand=%23000000'),new RegExp(`site colors: ${stock}|\\.theme-preview`));
  const etag=(await handle(new Request('https://events.example.org/theme.css'),e)).headers.get('etag');assert.equal((await handle(new Request('https://events.example.org/theme.css',{headers:{'if-none-match':etag}}),e)).status,304);
  await rejects(call(e,'PUT','appearance',{theme:'forest'},['events']),403);
 });
