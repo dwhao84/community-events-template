@@ -261,3 +261,17 @@ test('網站圖示：須為 512 與 180 的正方形 PNG；套用到所有 favic
  assert.equal(e.objects.size,before-2,'both icon files removed');assert.equal(await (await handle(new Request('https://events.example.org/favicon.ico'),e)).text(),'default-icon');
  await rejects(call(e,'PUT','appearance/icon',{reset:true},['photos']),403);
 });
+
+test('首頁活動依日期排序：即將舉行的最近在前，已結束的排在後面（最近結束的在前）',async()=>{
+ const {sortByDate}=await import('../src/api.js');
+ const now=Date.parse('2026-12-01T00:00:00+08:00'),s=(starts,ends=starts,status='published')=>({status,starts_at:starts,ends_at:ends});
+ const events=[
+  {id:'jan',sessions:[s('2027-01-09T10:00:00+08:00')]},
+  {id:'none',sessions:[]},
+  {id:'oldPast',sessions:[s('2026-10-01T10:00:00+08:00')]},
+  {id:'dec20',sessions:[s('2026-12-20T10:00:00+08:00')]},
+  {id:'recentPast',sessions:[s('2026-11-20T10:00:00+08:00')]},
+  {id:'multi',sessions:[s('2026-11-25T10:00:00+08:00'),s('2026-12-06T07:00:00+08:00'),s('2026-12-03T10:00:00+08:00','2026-12-03T12:00:00+08:00','cancelled')]},
+  {id:'ongoing',sessions:[s('2026-11-30T20:00:00+08:00','2026-12-01T02:00:00+08:00')]}];
+ assert.deepEqual(sortByDate(events,now).map(e=>e.id),['ongoing','multi','dec20','jan','recentPast','oldPast','none']);
+});

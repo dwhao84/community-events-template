@@ -10,6 +10,11 @@ import {turnstileSiteKey,verifyTurnstile} from './turnstile.js';
 import {feeInput,seatLimitInput,quickEvent,duplicateEvent,setHidden,deleteEvent,restoreEvent,addRegistration,purgeRegistration,stats,statsCSV,uploadSiteImage,bannersAPI,publicBanners,aboutAPI,appearanceAPI} from './admin-tools.js';
 const requiredRow=async(db,table,id)=>{const row=await one(db,`SELECT * FROM ${table} WHERE id=?`,id);if(!row)fail(404,'找不到資料');return row;};
 const sessionQuery=`SELECT s.*,COALESCE(s.form_id,e.default_form_id) active_form_id,COALESCE((SELECT SUM(seats) FROM registrations r WHERE r.session_id=s.id AND r.status IN('pending','confirmed')),0) occupied,(SELECT COUNT(*) FROM registrations r WHERE r.session_id=s.id AND r.status='waitlisted') waitlisted FROM event_sessions s JOIN events e ON e.id=s.event_id`;
+// Home page order: events with an upcoming (not yet ended, published) session first, soonest first; then past events, most recent first.
+export function sortByDate(events,now=Date.now()){
+ const key=e=>{const next=e.sessions.filter(s=>s.status==='published'&&Date.parse(s.ends_at)>=now).map(s=>Date.parse(s.starts_at));const last=e.sessions.map(s=>Date.parse(s.starts_at)).filter(Number.isFinite);return next.length?[0,Math.min(...next)]:[1,last.length?-Math.max(...last):Number.MAX_SAFE_INTEGER];};
+ const keys=new Map(events.map(e=>[e,key(e)]));return events.sort((a,b)=>{const x=keys.get(a),y=keys.get(b);return x[0]-y[0]||x[1]-y[1];});
+}
 export async function publicData(env) {
  const cfg=await settings(env.DB);const events=await all(env.DB,"SELECT id,title,description,cover_photo_id,notes,contact FROM events WHERE status='published' AND hidden=0 AND deleted_at IS NULL ORDER BY created_at DESC");
  for(const e of events){
@@ -18,6 +23,7 @@ export async function publicData(env) {
   if(!e.photos.some(p=>p.id===e.cover_photo_id))e.cover_photo_id=null;
   for(const s of e.sessions){if(!e.photos.some(p=>p.id===s.cover_photo_id))s.cover_photo_id=null;delete s.form_id;}
  }
+ sortByDate(events);
  return {brand:cfg.brand,english_brand:cfg.english_brand,events,banners:await publicBanners(env.DB),privacy:{version:cfg.privacy_version,summary:cfg.privacy_summary,body:cfg.privacy_body,statement:cfg.participation_statement}};
 }
 const participantRowLimit=100,ageGroups=['大','小'],genders=['男','女','其他'],identities=site.identities;
