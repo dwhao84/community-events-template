@@ -108,6 +108,7 @@
    - 第三方產生的秘密（`TURNSTILE_SECRET_KEY`、`RESEND_API_KEY`、`RESEND_WEBHOOK_SECRET`）：**請人自己在終端機執行** `npx wrangler secret put <名稱>` 再貼上。在 Claude Code 裡，可以請對方在輸入框打 `! npx wrangler secret put <名稱>`。**絕不請人把秘密貼進對話。**
    - 公開值（Turnstile Site Key、Access AUD、團隊網域、GA4 衡量 ID）可以在對話中拿，由 AI 寫進 `wrangler.jsonc`。
 5. **對外動作每次都要同意。** 部署、遠端 migration、寫入正式 D1、`wrangler secret put`、`git push`、建立或刪除雲端資源，都要先說明影響並等同意。上一次的同意不適用於下一次。
+   - 有腳本的階段（第一次部署 `npm run deploy:first`、報名防護 `npm run setup:turnstile`）可以**一次同意整個階段**：先用 `--plan` 列出全部項目原樣給人看，同意後才加 `--yes` 執行。清單以外的事要另外問。
 6. **AI 進不了後台。** 正式站的 `/admin/` 和 `/api/admin/` 由 Cloudflare Access 保護，AI 沒有登入憑證，**不得嘗試繞過**。只能在後台做的事一律交給人。活動與場次可以改用 `manage-events`、`update-sessions` skill，經同意後寫入 D1。
 7. **不在正式站測試。** 不送測試報名、不寄測試通知給住戶。功能測試一律在本機 `npm run dev` 進行。
 8. **記錄進度。** 把每一項的狀態記在 `.local/handoff-status.md`（`.local/` 不會被提交），狀態分為：未開始／等待人／已完成並確認／人說完成但尚未確認／使用者決定略過。不得記錄秘密值或個資。
@@ -208,11 +209,12 @@
 
 - 讀 AI 的說明（會影響什麼、能不能復原），回覆「同意」或「先不要」。
 
-**需要同意的動作**：部署（`npm run deploy`）、修改正式資料庫結構（遠端 migration）、寫入正式資料庫、設定秘密、`git push`、建立或刪除 Cloudflare 資源、把網站退回舊版本。
+**需要同意的動作**：部署（`npm run deploy`、`npm run deploy:first`）、修改正式資料庫結構（遠端 migration）、寫入正式資料庫、設定秘密、`git push`、建立或刪除 Cloudflare 資源、把網站退回舊版本。
 
 #### AI 會做
 
-- 部署前記錄目前版本（`npx wrangler deployments list`），部署後記錄新版本與網址。
+- 部署前記錄目前版本（`npx wrangler deployments list`），部署後記錄新版本與網址。`deploy:first` 與 `setup:turnstile` 會自動寫進 `.local/deploy-log.md`。
+- 第一次部署用 `npm run deploy:first`：先 `--plan` 列出清單（建立 Worker／D1／R2、遠端 migration、寫入秘密、回填 `SITE_URL`、標頭檢查），你同意一次後連續做完。帳號裡已有同名網站時它會停下，不會覆蓋。
 - 依 `AGENTS.md`「部署與回復」檢查頁面、公開 API 與安全標頭。
 
 ### B2. 自訂網域（選用，建議）
@@ -247,11 +249,8 @@
 
 #### AI 會做（經同意；不需要你輸入任何值）
 
-```sh
-node -e "console.log(crypto.randomUUID()+crypto.randomUUID())" | npx wrangler secret put RATE_SALT
-node -e "console.log(crypto.randomUUID()+crypto.randomUUID())" | npx wrangler secret put FEEDBACK_TOKEN_SECRET
-printf '%s' '<管理員 Email>' | npx wrangler secret put ADMIN_BOOTSTRAP_EMAIL
-```
+- 第一次部署時執行 `npm run deploy:first -- --admin-email <管理員 Email>`，它會連同隨機產生的 `RATE_SALT`、`FEEDBACK_TOKEN_SECRET` 一起寫入秘密，不會顯示在畫面上。
+- 不用腳本時，手動做法見 [`setup-guide.md` 步驟 9](setup-guide.md#步驟-9設定秘密)。
 
 **完成的樣子**：`npx wrangler secret list` 列出這三個名稱。這個指令只顯示名稱，不會顯示值。
 
@@ -315,11 +314,13 @@ printf '%s' '<管理員 Email>' | npx wrangler secret put ADMIN_BOOTSTRAP_EMAIL
 
 > 報名不需要登入。沒有這一步，任何人都能用程式灌假報名把名額佔滿，或借網站寄「報名收件通知」給陌生人。
 
-- **必要性**：強烈建議｜**大約時間**：10 分鐘
+- **必要性**：強烈建議｜**大約時間**：5–10 分鐘
 
-#### 你要做
+AI 會先執行 `npm run setup:turnstile -- --plan` 給你看清單，你同意後它試著用 Cloudflare API 自動建立 widget、寫入兩把鑰匙並重新部署；成功的話**你不用做下面任何一步**，只要做「完成的樣子」的手機檢查。API 權限不足時，才需要你做：
 
-1. Cloudflare 儀表板 → **Turnstile** → **Add widget**。
+#### 你要做（自動建立失敗時）
+
+1. Cloudflare 儀表板 → **Turnstile** → **Add widget**（腳本會印出直接的連結和要填的網域）。
    - 主機名稱：網站網址的網域部分（例如 `events.example.org`）。
    - Widget Mode：**Managed**。
 2. 把 **Site Key**（公開值）貼給 AI。
@@ -330,7 +331,7 @@ printf '%s' '<管理員 Email>' | npx wrangler secret put ADMIN_BOOTSTRAP_EMAIL
 
 #### AI 會做
 
-- 把 Site Key 寫入 `wrangler.jsonc` 的 `TURNSTILE_SITE_KEY`，經同意後部署。
+- 執行 `npm run setup:turnstile -- --site-key <Site Key> --yes`：把 Site Key 寫入 `wrangler.jsonc`、確認 Secret Key 已設定，再部署並檢查 CSP。
 
 #### 完成的樣子
 

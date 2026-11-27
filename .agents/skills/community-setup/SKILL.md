@@ -12,7 +12,7 @@ description: 把「社區活動報名模板」設定成某個社區自己的網�
 ## 必須遵守
 
 - **秘密不落地**：`RATE_SALT`、`FEEDBACK_TOKEN_SECRET`、`TURNSTILE_SECRET_KEY`、`RESEND_API_KEY`、`RESEND_WEBHOOK_SECRET` 只能用 `wrangler secret put` 或 Deploy 按鈕的秘密欄位輸入，不得寫進任何會提交的檔案、不得印在回覆裡。`.dev.vars` 只放本機值，且已在 `.gitignore`。
-- **對外動作先確認**：`wrangler deploy`、遠端 migration、建立 GitHub repo、`git push`、刪除任何雲端資源前，先向使用者說明會發生什麼並取得同意。
+- **對外動作先確認**：`wrangler deploy`、遠端 migration、建立 GitHub repo、`git push`、刪除任何雲端資源前，先向使用者說明會發生什麼並取得同意。`npm run deploy:first` 與 `npm run setup:turnstile` 會用 `--plan` 列出整個階段要做的事；使用者看過清單同意一次後，才可以加 `--yes` 連續執行該階段。
 - **不在正式站做測試報名**：功能測試在本機（`npm run dev`）進行。
 - **不改觸發器與 migration 來繞過限制**：新增欄位或規則一律新增編號接續的 migration。
 - 使用者沒填、或填得不合理的欄位（例如網址不是 https、身分選項超過 50 字），先問清楚再寫入。
@@ -22,7 +22,8 @@ description: 把「社區活動報名模板」設定成某個社區自己的網�
 ### 1. 檢查環境
 
 - 確認有 Node.js 22.13 以上（`node -v`）與 `sqlite3`（`sqlite3 --version`，跑檢查需要）。沒有的話告訴使用者如何安裝，不要自行用 sudo。
-- 執行 `npm install`（或 `npx pnpm@10 install`），然後 `node scripts/check.mjs`，確認起點是綠的。
+- **先**執行 `npm install`（或 `npx pnpm@10 install`），確認 `node_modules/.bin/wrangler` 存在，之後才用 `npx wrangler`；否則 `npx` 會去下載另一個版本或停在確認。
+- 執行 `npm run check`，確認起點是綠的。`check` 第一步是設定預檢（`npm run config:check`）：`wrangler.jsonc` 與 `site.config.json` 的格式錯誤會直接列出，`○○` 預留文字只提醒、不算失敗。
 
 ### 2. 寫入在地內容
 
@@ -49,15 +50,17 @@ description: 把「社區活動報名模板」設定成某個社區自己的網�
 - `vars`：`APP_ENV` 保持 `production`。`SITE_URL` 等部署後知道網址再填。要寄信：`MAIL_MODE` 改 `resend`，填 `MAIL_FROM`、`MAIL_REPLY_TO`。要 GA4：填 `GA4_MEASUREMENT_ID`。
 - 有自訂網域時加上 `"routes": [{"pattern": "<網域>", "custom_domain": true}]`，並可把 `workers_dev` 改為 `false`。
 
-完成後再跑一次 `node scripts/check.mjs`。
+完成後再跑一次 `npm run check`。測試不寫死模板預設文字，改了社區名稱、配色、身分選項後仍應全部通過；若有測試因為在地內容而失敗，修測試讓它讀 `src/site.js`，不要把設定改回預設。
 
 ### 4. 本機預覽
 
 ```sh
-cp .dev.vars.example .dev.vars   # 取消註解 APP_ENV、SITE_URL、LOCAL_ADMIN_TOKEN，並填入本機用的隨機值
-npm run db:local
-npm run dev                      # http://localhost:8787
+npm run setup:local -- --with-sample   # 檢查工具 → 產生 .dev.vars（已存在不覆寫）→ 本機 migration → 示範活動 → npm run dev
 ```
+
+- `.dev.vars` 不存在時，腳本用隨機值產生本機秘密與 `LOCAL_ADMIN_TOKEN`，並開啟 `APP_ENV=development`、`SITE_URL=http://localhost:8787`。
+- `--with-sample` 只在本機 `.wrangler/` 加入一個「【示範】」活動（兩個未來場次），並開啟本機營運設定，讓首頁不是空白、可以試填報名；重跑不會重複加入。不加就是空的資料庫。
+- 只想準備好不啟動：加 `--no-dev`。手動做法仍可用：`cp .dev.vars.example .dev.vars`、`npm run db:local`、`npm run dev`。
 
 請使用者打開首頁、`/about.html`、`/admin/`（用 `LOCAL_ADMIN_TOKEN` 登入），確認名稱與文字正確。可用 `TEST_ADMIN_TOKEN=<權杖> node tests/integration.mjs` 做一次完整報名流程（只寫入本機 D1）。
 
@@ -69,15 +72,18 @@ npm run dev                      # http://localhost:8787
 
 ```sh
 npx wrangler login
-npm run deploy                         # wrangler deploy（自動建立 D1、R2）後套用遠端 migration
-npx wrangler secret put RATE_SALT      # 值用：node -e "console.log(crypto.randomUUID()+crypto.randomUUID())"
-npx wrangler secret put FEEDBACK_TOKEN_SECRET
-npx wrangler secret put ADMIN_BOOTSTRAP_EMAIL   # 第一位管理員 Email
+npm run deploy:first -- --plan --admin-email <管理員 Email>   # 只讀：檢查、登入帳號、同名 Worker／D1／R2、R2 是否啟用
+npm run deploy:first -- --yes  --admin-email <管理員 Email>   # 使用者同意清單後才執行
 ```
 
-秘密值由你產生後直接用管線傳給 `wrangler secret put`，不要顯示在回覆中。
+`deploy:first` 依序完成：`wrangler deploy`（自動建立 D1、R2）→ 遠端 migration（不會停在 Y/n）→ 產生 `RATE_SALT`、`FEEDBACK_TOKEN_SECRET`（已存在就不改）並連同 `ADMIN_BOOTSTRAP_EMAIL` 經 stdin 寫入秘密 → `SITE_URL` 空白時回填 workers.dev 網址並再部署 → 檢查首頁 200、CSP、HSTS、X-Content-Type-Options。版本 ID、網址與檢查結果寫進 `.local/deploy-log.md`，不含秘密。
 
-部署完成後記下網址（`https://<name>.<子網域>.workers.dev` 或自訂網域），把它填入 `wrangler.jsonc` 的 `SITE_URL` 並再部署一次；信件中的連結、行事曆與課程回饋都需要它。
+- 帳號已有同名 Worker 時腳本會停下，不會覆蓋；已經上線的網站之後更新一律用 `npm run deploy`。
+- R2 未啟用、帳號有多個、同名 D1／R2 已存在時，腳本會說明下一步；照訊息處理，不要自行刪資源。
+- 有自訂網域（`SITE_URL` 已填）時不會改寫 `SITE_URL`。
+- 沒有 `--admin-email` 時會讀 `MY-COMMUNITY.md` 的管理員欄位；都沒有就略過，之後要另外 `wrangler secret put ADMIN_BOOTSTRAP_EMAIL`。
+
+手動做法（腳本不適用時）：`npm run deploy`，再把產生的秘密用管線傳給 `npx wrangler secret put <名稱>`（不要顯示在回覆中），最後把網址填入 `SITE_URL` 再部署一次；信件中的連結、行事曆與課程回饋都需要它。
 
 ### 6. 後台登入（Cloudflare Access）— 需要使用者在網頁上操作
 
@@ -96,7 +102,15 @@ npx wrangler secret put ADMIN_BOOTSTRAP_EMAIL   # 第一位管理員 Email
 
 ### 報名防護：Cloudflare Turnstile（強烈建議，開放報名前完成）
 
-公開報名不需登入；沒有這項防護時，任何人都能用程式灌假報名佔滿名額，或借網站寄收件通知給陌生信箱。帶使用者在網頁上操作：
+公開報名不需登入；沒有這項防護時，任何人都能用程式灌假報名佔滿名額，或借網站寄收件通知給陌生信箱。
+
+優先用 `npm run setup:turnstile`（先 `--plan` 給使用者看清單，同意後加 `--yes`）：
+
+- 腳本先試 Cloudflare API（`CLOUDFLARE_API_TOKEN`，或 wrangler 登入的權杖，需要 Turnstile 寫入權限）建立 Managed widget；Site Key 寫進 `wrangler.jsonc`，Secret Key 直接經 stdin 寫入 `TURNSTILE_SECRET_KEY`，兩者都不經過對話。
+- 權限不足時自動改成人工步驟：印出儀表板連結與要填的網域。使用者把 Site Key 給你後執行 `npm run setup:turnstile -- --site-key <Site Key> --yes`；Secret Key 由使用者自己在終端機用 `npx wrangler secret put TURNSTILE_SECRET_KEY` 輸入。
+- 兩把鑰匙到位後腳本重新部署，並檢查 CSP 含 `challenges.cloudflare.com`。
+
+完全手動時，帶使用者在網頁上操作：
 
 1. Cloudflare 儀表板 → **Turnstile → Add widget**，主機名稱填網站網域（`SITE_URL` 的主機），Widget Mode 選 **Managed**。
 2. **Site Key** 是公開值，填入 `wrangler.jsonc` 的 `TURNSTILE_SITE_KEY`；**Secret Key** 用 `npx wrangler secret put TURNSTILE_SECRET_KEY` 輸入（不要顯示在回覆中）。

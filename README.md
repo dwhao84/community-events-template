@@ -403,14 +403,12 @@ AI 繪圖常把中文字畫錯。建議讓 AI **只畫背景、不放字**，再
 ## 給開發者
 
 - 沒有建置步驟：`public/` 是靜態檔，`src/worker.js` 是單一 Worker；資料在 D1，圖片在 R2。
-- 本機開發：
-  1. `cp .dev.vars.example .dev.vars`，取消註解本機設定；
-  2. `npm run db:local`；
-  3. `npm run dev`。
+- 本機開發：`npm run setup:local`（產生 `.dev.vars`、套用本機 migration、啟動 `npm run dev`；加 `-- --with-sample` 匯入只在本機的示範活動）。之後只要 `npm run dev`。
 - 本機測試 Turnstile：在 `.dev.vars` 填入 Cloudflare 的測試金鑰（見 `.dev.vars.example`），報名表會出現一定通過的測試方框。測試金鑰在正式環境會被拒絕。
-- 檢查：`npm run check`（語法、單元測試、migration 與觸發器）。
+- 檢查：`npm run check`（設定檔格式預檢、語法、單元測試、migration 與觸發器）；只檢查設定檔：`npm run config:check`。
 - 整合測試：開著 `npm run dev`，執行 `TEST_ADMIN_TOKEN=<權杖> node tests/integration.mjs`。
-- 部署：`npm run deploy`（`wrangler deploy` 後套用遠端 migration）。
+- 第一次部署：`npm run deploy:first -- --plan` 先看清單，同意後 `-- --yes --admin-email <Email>`；報名防護：`npm run setup:turnstile`。
+- 之後部署：`npm run deploy`（`wrangler deploy` 後套用遠端 migration）。
 - 規範、架構與驗收清單見 [`AGENTS.md`](AGENTS.md)；GA4 見 [`docs/analytics.md`](docs/analytics.md)。
 - 資料庫異動請新增編號接續的 migration，不要改舊檔。容量、狀態與每筆人數上限由 D1 觸發器強制執行。
 

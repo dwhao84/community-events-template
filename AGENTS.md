@@ -67,7 +67,7 @@
 ## 部署與回復
 
 - 僅在使用者已授權的部署範圍內操作；區分本機開發（`.dev.vars` 設 `APP_ENV=development`）與正式環境，不變更無關環境或秘密設定。
-- 程式變更部署前通過適用檢查；部署使用 `npm run deploy`（`wrangler deploy` 後套用遠端 migration），或由 Deploy to Cloudflare 建立的 Workers Builds 在推送後自動部署。
+- 程式變更部署前通過適用檢查；部署使用 `npm run deploy`（`wrangler deploy` 後套用遠端 migration；第一次部署可用 `npm run deploy:first`，先以 `--plan` 列出清單、使用者同意後才加 `--yes`），或由 Deploy to Cloudflare 建立的 Workers Builds 在推送後自動部署。
 - 部署前記錄目前正式版本，部署後記錄新版本及公開網址。完成報告須區分本機修改、成功部署與實際驗證，不把上傳開始當作上線成功。
 - 上線後依影響範圍檢查：頁面與樣式、公開 API、圖片、報名表載入及安全標頭；不可為了正式站驗收建立測試報名或寄送測試通知。
 - 部署失敗或發現影響使用的退步時，先避免持續擴大影響，使用已記錄的上一個可用版本修復或回復。Worker 版本回復不會還原 D1 資料、R2 物件或寄信等外部結果，資料回復須另行處理。
