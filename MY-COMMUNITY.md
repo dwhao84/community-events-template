@@ -4,6 +4,8 @@
 
 > 請依 community-setup skill，讀取 MY-COMMUNITY.md，幫我把這個模板設定好並部署。
 
+不想自己填也可以，直接說「第一次上架，用 community-setup 帶我設定」，AI 會用問答方式幫你填（依 `first-launch` skill）。
+
 不知道的欄位可以先空著，AI 會問你。**不要在這裡填任何密碼、API 金鑰或權杖**；那些會在部署時另外輸入。
 
 ## 1. 社區與品牌
