@@ -77,7 +77,7 @@ git branch --show-current
   - 真實姓名、電話
   - 個人 Email（示範資料只用 `example.com`、`.test` 網域）
   - Cloudflare 帳號 ID
-  - 填了管理員 Email 的 `MY-COMMUNITY.md`
+  - 開站問卷的答案（`.local/setup-answers.json`，含管理員 Email；`.local/` 本來就不提交）
 
 - **提交前掃描暫存區**：
 

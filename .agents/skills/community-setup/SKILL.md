@@ -1,13 +1,13 @@
 ---
 name: community-setup
-description: 把「社區活動報名模板」設定成某個社區自己的網站並部署到 Cloudflare：讀取 MY-COMMUNITY.md，填寫 site.config.json 與 wrangler.jsonc，本機預覽，部署 Worker／D1／R2，設定秘密、後台登入（Cloudflare Access）與第一位管理員，最後帶主辦方完成開站檢查。當使用者說「幫我把模板設定成我的社區」「依 MY-COMMUNITY.md 建起來」「部署這個報名網站」「設定後台登入」時使用。
+description: 把「社區活動報名模板」設定成某個社區自己的網站並部署到 Cloudflare：用開站問卷問出社區資料並寫進 site.config.json 與 wrangler.jsonc，本機預覽，部署 Worker／D1／R2，設定秘密、後台登入（Cloudflare Access）與第一位管理員，最後帶主辦方完成開站檢查。當使用者說「幫我把模板設定成我的社區」「用問答幫我設定網站」「部署這個報名網站」「設定後台登入」時使用。
 ---
 
 # 社區活動報名模板：設定與部署
 
 你是協助社區主辦方（多半不是工程師）把這份模板變成自己網站的助理。用繁體中文、白話說明每一步，並在需要對方操作網頁或做決定時停下來等回覆。
 
-開始前先完整閱讀 `AGENTS.md`（全部規範都適用），再讀 `MY-COMMUNITY.md`。需要交給使用者操作的事項（帳號授權、儀表板設定、第三方秘密、後台），依 `docs/manual-handoffs.md` 的編號與格式交接；逐步指令與預期結果見 `docs/setup-guide.md`。
+開始前先完整閱讀 `AGENTS.md`（全部規範都適用）。社區資料一律用開站問卷問（`npm run setup`，題目在 `scripts/setup-questions.mjs`），不請使用者自己編輯設定檔。需要交給使用者操作的事項（帳號授權、儀表板設定、第三方秘密、後台），依 `docs/manual-handoffs.md` 的編號與格式交接；逐步指令與預期結果見 `docs/setup-guide.md`。
 
 ## 必須遵守
 
@@ -25,32 +25,29 @@ description: 把「社區活動報名模板」設定成某個社區自己的網�
 - **先**執行 `npm install`（或 `npx pnpm@10 install`），確認 `node_modules/.bin/wrangler` 存在，之後才用 `npx wrangler`；否則 `npx` 會去下載另一個版本或停在確認。
 - 執行 `npm run check`，確認起點是綠的。`check` 第一步是設定預檢（`npm run config:check`）：`wrangler.jsonc` 與 `site.config.json` 的格式錯誤會直接列出，`○○` 預留文字只提醒、不算失敗。
 
-### 2. 寫入在地內容
+### 2. 用問卷問出在地內容與部署名稱
 
-依 `MY-COMMUNITY.md` 修改 `site.config.json`，欄位對照：
+主辦方不需要自己填檔案。依序問 `content`（社區與網站內容）和 `deploy`（網址與管理員）兩關：
 
-| MY-COMMUNITY.md | site.config.json |
-| --- | --- |
-| 社區名稱 | `communityName` |
-| 網站中文／英文名稱 | `brand`／`englishBrand` |
-| 標誌字 | `brandMark`（一個字） |
-| 標語、簡介 | `tagline`、`description` |
-| 網站配色 | `theme`：`ocean`、`forest`、`teal`、`sunset`、`sakura`、`lavender`、`brick`、`earth`、`night`、`graphite` 其一（見 `src/themes.js`）；後台存過配色後以後台為準 |
-| 對外連結 | `links`：`[{label,note,url}]`，url 必須 https |
-| 身分選項 | `identities`：字串陣列，每個最多 50 字 |
-| 關於我們 | `about`：`{title,paragraphs:[...],contact}`（只是預設；後台可改） |
-| 信件署名、回饋信主辦單位 | `emailSignoff`、`feedbackOrganizer` |
+```sh
+npm run setup -- next --stage content          # 這一關還沒答的題目（JSON），一次最多 4 題；快速開站加 --quick
+npm run setup -- set '{"communityName":"幸福社宅","brand":null}'   # 存答案；null 代表「用預設」
+npm run setup -- show --stage content          # 複述給使用者確認（個資會遮住）
+npm run setup -- apply --stage content         # 寫進 site.config.json 與 public/site.webmanifest，並跑設定預檢
+```
 
-也同步更新 `public/site.webmanifest` 的 `name`、`short_name`。不要把社區名稱寫進 HTML 或 JS（AGENTS.md「模板與在地內容」）。
+- 照 `next` 回傳的 `ask` 與 `example` 發問；有 `default` 的告訴使用者可以回「用預設」。
+- `set` 回傳 `errors` 時，把錯誤訊息白話轉告並重問，不要自行修改答案。
+- `deploy` 關的 `apply` 會把 `name`、`database_name` 設為同一個名稱，`bucket_name` 加上 `-photos`，有自訂網域時加上 `routes` 並把 `SITE_URL` 設為 `https://<網域>`。**不要填 `database_id`**，部署時會自動建立。
+- 管理員 Email（`adminEmail`）是個資，只存在 `.local/setup-answers.json`，由 `deploy:first` 直接讀取，不寫進任何會提交的檔案。
+- `site.config.json` 的配色（`theme`）只是預設；後台存過配色後以後台為準。不要把社區名稱寫進 HTML 或 JS（AGENTS.md「模板與在地內容」）。
+- `npm run setup -- status` 隨時可看每一關已答／還缺哪些。中斷後答案還在，從還沒答的題目接著問。
 
-### 3. 調整部署設定 `wrangler.jsonc`
+### 3. 部署設定 `wrangler.jsonc` 的其他值
 
-- `name`：使用者想要的 Worker 名稱（小寫英數與 `-`）。
-- `d1_databases[0].database_name`、`r2_buckets[0].bucket_name`：用同一個前綴，例如 `happy-events`、`happy-events-photos`。**不要填 `database_id`**，部署時會自動建立。
-- `vars`：`APP_ENV` 保持 `production`。`SITE_URL` 等部署後知道網址再填。要寄信：`MAIL_MODE` 改 `resend`，填 `MAIL_FROM`、`MAIL_REPLY_TO`。要 GA4：填 `GA4_MEASUREMENT_ID`。
-- 有自訂網域時加上 `"routes": [{"pattern": "<網域>", "custom_domain": true}]`，並可把 `workers_dev` 改為 `false`。
-
-完成後再跑一次 `npm run check`。測試不寫死模板預設文字，改了社區名稱、配色、身分選項後仍應全部通過；若有測試因為在地內容而失敗，修測試讓它讀 `src/site.js`，不要把設定改回預設。
+- `vars.APP_ENV` 保持 `production`；`SITE_URL` 在第一次部署時由 `deploy:first` 自動填入（有自訂網域時已由問卷填好）。
+- 寄信與 GA4 由 `optional` 關的問卷設定（第 7 步），Access 由 `login` 關設定（第 6 步）。
+- 完成後再跑一次 `npm run check`。測試不寫死模板預設文字，改了社區名稱、配色、身分選項後仍應全部通過；若有測試因為在地內容而失敗，修測試讓它讀 `src/site.js`，不要把設定改回預設。
 
 ### 4. 本機預覽
 
@@ -72,8 +69,8 @@ npm run setup:local -- --with-sample   # 檢查工具 → 產生 .dev.vars（已
 
 ```sh
 npx wrangler login
-npm run deploy:first -- --plan --admin-email <管理員 Email>   # 只讀：檢查、登入帳號、同名 Worker／D1／R2、R2 是否啟用
-npm run deploy:first -- --yes  --admin-email <管理員 Email>   # 使用者同意清單後才執行
+npm run deploy:first -- --plan   # 只讀：檢查、登入帳號、同名 Worker／D1／R2、R2 是否啟用
+npm run deploy:first -- --yes    # 使用者同意清單後才執行
 ```
 
 `deploy:first` 依序完成：`wrangler deploy`（自動建立 D1、R2）→ 遠端 migration（不會停在 Y/n）→ 產生 `RATE_SALT`、`FEEDBACK_TOKEN_SECRET`（已存在就不改）並連同 `ADMIN_BOOTSTRAP_EMAIL` 經 stdin 寫入秘密 → `SITE_URL` 空白時回填 workers.dev 網址並再部署 → 檢查首頁 200、CSP、HSTS、X-Content-Type-Options。版本 ID、網址與檢查結果寫進 `.local/deploy-log.md`，不含秘密。
@@ -81,7 +78,7 @@ npm run deploy:first -- --yes  --admin-email <管理員 Email>   # 使用者同�
 - 帳號已有同名 Worker 時腳本會停下，不會覆蓋；已經上線的網站之後更新一律用 `npm run deploy`。
 - R2 未啟用、帳號有多個、同名 D1／R2 已存在時，腳本會說明下一步；照訊息處理，不要自行刪資源。
 - 有自訂網域（`SITE_URL` 已填）時不會改寫 `SITE_URL`。
-- 沒有 `--admin-email` 時會讀 `MY-COMMUNITY.md` 的管理員欄位；都沒有就略過，之後要另外 `wrangler secret put ADMIN_BOOTSTRAP_EMAIL`。
+- 管理員 Email 從問卷答案（`adminEmail`）讀取；也可以用 `--admin-email` 指定。都沒有時會略過，之後要另外 `wrangler secret put ADMIN_BOOTSTRAP_EMAIL`。
 
 手動做法（腳本不適用時）：`npm run deploy`，再把產生的秘密用管線傳給 `npx wrangler secret put <名稱>`（不要顯示在回覆中），最後把網址填入 `SITE_URL` 再部署一次；信件中的連結、行事曆與課程回饋都需要它。
 
@@ -94,7 +91,7 @@ npm run deploy:first -- --yes  --admin-email <管理員 Email>   # 使用者同�
 3. 網域填網站網址，路徑加兩條：`admin` 與 `api/admin`（都保護）。
 4. Policy：Action 選 **Allow**，Include → **Emails** → 填管理員 Email。登入方式可用預設的 One-time PIN（寄驗證碼到信箱）。
 5. 存檔後，在應用程式的 Overview 複製 **Application Audience (AUD) Tag**；團隊網域在 Settings → Custom Pages，形如 `<團隊>.cloudflareaccess.com`。
-6. 把兩個值填入 `wrangler.jsonc` 的 `ACCESS_AUD`、`ACCESS_TEAM_DOMAIN`，部署。
+6. 用 `npm run setup -- next --stage login` 問這兩個值，`set`、確認後 `npm run setup -- apply --stage login`，經同意後部署。
 
 若 Access 無法加在 `workers.dev` 網址上的特定路徑，請建議使用者把網域交給 Cloudflare 管理並改用自訂網域，再回到第 3 步。
 
@@ -107,7 +104,7 @@ npm run deploy:first -- --yes  --admin-email <管理員 Email>   # 使用者同�
 優先用 `npm run setup:turnstile`（先 `--plan` 給使用者看清單，同意後加 `--yes`）：
 
 - 腳本先試 Cloudflare API（`CLOUDFLARE_API_TOKEN`，或 wrangler 登入的權杖，需要 Turnstile 寫入權限）建立 Managed widget；Site Key 寫進 `wrangler.jsonc`，Secret Key 直接經 stdin 寫入 `TURNSTILE_SECRET_KEY`，兩者都不經過對話。
-- 權限不足時自動改成人工步驟：印出儀表板連結與要填的網域。使用者把 Site Key 給你後執行 `npm run setup:turnstile -- --site-key <Site Key> --yes`；Secret Key 由使用者自己在終端機用 `npx wrangler secret put TURNSTILE_SECRET_KEY` 輸入。
+- 權限不足時自動改成人工步驟：印出儀表板連結與要填的網域。用 `npm run setup -- next --stage protect` 問 Site Key 並 `set`，再執行 `npm run setup:turnstile -- --yes`；Secret Key 由使用者自己在終端機用 `npx wrangler secret put TURNSTILE_SECRET_KEY` 輸入。
 - 兩把鑰匙到位後腳本重新部署，並檢查 CSP 含 `challenges.cloudflare.com`。
 
 完全手動時，帶使用者在網頁上操作：
@@ -123,9 +120,11 @@ npm run deploy:first -- --yes  --admin-email <管理員 Email>   # 使用者同�
 1. 在 Resend 新增並驗證寄件網域（依畫面加 DNS 紀錄）。
 2. 建 API Key → `npx wrangler secret put RESEND_API_KEY`。
 3. 新增 Webhook：網址 `<SITE_URL>/api/webhooks/resend`，事件勾選 email.* 送達相關事件，把 signing secret 存為 `RESEND_WEBHOOK_SECRET`。
-4. `MAIL_MODE` 改 `resend`，填 `MAIL_FROM`、`MAIL_REPLY_TO`，部署。後台「通知中心 → 寄測試信」寄給使用者自己確認。
+4. 用 `npm run setup -- next --stage optional` 問要不要寄信、寄件人與回信信箱（GA4 也在這一關），確認後 `npm run setup -- apply --stage optional`（會設定 `MAIL_MODE=resend`、`MAIL_FROM`、`MAIL_REPLY_TO`、`GA4_MEASUREMENT_ID`），部署。後台「通知中心 → 寄測試信」寄給使用者自己確認。
 
 ### 8. 開站前檢查（帶主辦方在後台完成）
+
+先用 `npm run setup -- next --stage launch` 問個資聯絡窗口、保存期限、要不要自訂頁面、第一個活動。這一關不寫檔：依答案起草文字，標示為草稿，交給主辦方貼到後台。
 
 1. **營運設定**：寫正式的個資告知（不能含「【草稿」）、換新版本編號、勾選「可允許場次開放報名」。
 2. **網站外觀**：選配色（或自訂五個顏色，對比不足無法儲存），上傳網站圖示。

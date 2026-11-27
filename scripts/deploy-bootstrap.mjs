@@ -4,19 +4,15 @@
 // 用法：
 //   npm run deploy:first -- --plan                       只做檢查並列出將執行的項目，不做任何變更
 //   npm run deploy:first -- --admin-email you@example.org  執行（終端機會要求輸入 y 確認；AI 助理在取得同意後加 --yes）
-// 沒有 --admin-email 時讀取 MY-COMMUNITY.md 的「第一位管理員的 Email」。秘密只經 stdin 傳給 wrangler，不會印出。
-import {readFileSync,existsSync} from 'node:fs';
-import {join} from 'node:path';
+// 沒有 --admin-email 時讀取開站問卷的答案（.local/setup-answers.json 的 adminEmail）。秘密只經 stdin 傳給 wrangler，不會印出。
 import {randomBytes} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
-import {root,say,warn,die,readWrangler,setVar,wrangler,account,secretNames,putSecrets,versionId,workersDevURL,confirm,checkSite,log,runCheck} from './deploy-lib.mjs';
+import {readAnswers} from './setup-answers.mjs';
+import {say,warn,die,readWrangler,setVar,wrangler,account,secretNames,putSecrets,versionId,workersDevURL,confirm,checkSite,log,runCheck} from './deploy-lib.mjs';
 
 export const r2Disabled=text=>/10042|enable R2|R2.*not.*enabled|purchase R2/i.test(text);
 export const bucketNames=text=>[...text.matchAll(/^name:\s*(\S+)/gm)].map(m=>m[1]);
 export const workerMissing=text=>/10007|does not exist|not found|could not find/i.test(text);
-export function adminEmailFromMyCommunity(md){
- const m=md.match(/第一位管理員的 Email[^：:\n]*[：:][ \t]*([^\s]+@[^\s]+)/);return m?m[1].replace(/[<>`]/g,''):'';
-}
 const arg=(flags,name)=>{const a=process.argv.slice(2),i=a.indexOf(name);if(i>=0&&a[i+1]&&!a[i+1].startsWith('--'))return a[i+1];const eq=a.find(x=>x.startsWith(name+'='));return eq?eq.slice(name.length+1):'';};
 
 async function main(){
@@ -24,7 +20,7 @@ async function main(){
  const plan=flags.has('--plan');
  const w=readWrangler(),name=w.name,dbName=w.d1_databases?.find(d=>d.binding==='DB')?.database_name,bucket=w.r2_buckets?.find(b=>b.binding==='PHOTOS')?.bucket_name;
  let email=arg(flags,'--admin-email')||process.env.ADMIN_BOOTSTRAP_EMAIL||'';
- if(!email&&existsSync(join(root,'MY-COMMUNITY.md')))email=adminEmailFromMyCommunity(readFileSync(join(root,'MY-COMMUNITY.md'),'utf8'));
+ if(!email)email=readAnswers().adminEmail||'';
  if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))die(`管理員 Email 格式錯誤：${email}`);
 
  say('1/7 程式與設定檢查（npm run check）…');

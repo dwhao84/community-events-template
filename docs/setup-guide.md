@@ -52,7 +52,7 @@
 
 - **最花時間的是內容，不是技術設定。** 步驟 4（填社區內容）和步驟 16（個資告知、圖片、第一個活動）合計 50–100 分鐘。部署、秘密、登入保護等技術步驟交給 AI 的話，合計約 1 小時，大多是人在 Cloudflare 網頁上點選的時間。
 - **想先上線再慢慢改？** 請 AI 用 `first-launch` 的「快速開站模式」：只問社區／網站名稱、Worker 名稱、管理員 Email，其他先用預設，上線後在後台改。
-- **事先準備好可以更快。** `MY-COMMUNITY.md` 已填好、圖片與個資告知文字已備妥、電腦已有 Node.js 時，大約 1 個半小時就能上線。準備清單見 [`manual-handoffs.md`](manual-handoffs.md#開始前請準備)。
+- **事先準備好可以更快。** 社區名稱、身分選項、介紹文字已經想好，圖片與個資告知文字已備妥、電腦已有 Node.js 時，大約 1 個半小時就能上線。準備清單見 [`manual-handoffs.md`](manual-handoffs.md#開始前請準備)。
 - **另外有等待時間，不必一直守著。** 自訂網域把 nameserver 改到 Cloudflare，以及 Resend 寄件網域的 DNS 驗證，各需要幾分鐘到幾小時。要用自訂網域或寄 Email 的話，建議分兩次完成：第一次先用免費的 `workers.dev` 網址把網站架起來，等 DNS 生效後再接上網域與 Email。
 
 ---
@@ -72,7 +72,7 @@
 
 - **用 Deploy to Cloudflare 按鈕**：按 README 上的按鈕，由 Cloudflare 幫你建立 repo、資料庫與圖片空間並部署。這條路的步驟 6–9 改在網頁上完成；之後在新 repo 裡修改並 push，網站就會自動更新。細節見 [`manual-handoffs.md` A4](manual-handoffs.md#a4-github看部署方式)。
 
-**做完應該看到**：資料夾裡有 `README.md`、`MY-COMMUNITY.md`、`src/`、`public/`。
+**做完應該看到**：資料夾裡有 `README.md`、`src/`、`public/`、`scripts/`。
 
 ## 步驟 2：安裝工具
 
@@ -113,9 +113,16 @@ npm run check
 
 **誰做**：【人】決定內容，【AI】寫入設定檔
 
-1. 【人】打開 `MY-COMMUNITY.md`，填寫社區名稱、網站名稱、身分選項、關於我們、管理員 Email 等。**不要在這個檔案裡填任何密碼或金鑰。**
-2. 【AI】依 `.agents/skills/community-setup/SKILL.md` 第 2 步的對照表，修改 `site.config.json` 與 `public/site.webmanifest`。
-3. 【AI】再檢查一次：
+1. 【AI】用開站問卷一題一題問【人】：社區名稱、網站名稱、配色、身分選項、關於我們，以及網站程式名稱與管理員 Email。每題有範例，可以回「用預設」。
+
+   ```sh
+   npm run setup -- next --stage content   # 這一關還沒答的題目
+   npm run setup -- set '<答案 JSON>'      # 存答案，格式不對會當場拒絕
+   npm run setup -- apply --stage content  # 寫進 site.config.json 與 public/site.webmanifest
+   ```
+
+   `deploy` 關（網站程式名稱、管理員 Email、自訂網域）也一樣問完後 `apply --stage deploy`。答案只存在 `.local/setup-answers.json`；**任何密碼或金鑰都不會出現在問卷裡。**
+2. 【AI】再檢查一次：
 
    ```sh
    npm run check
