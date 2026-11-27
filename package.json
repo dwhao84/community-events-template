@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
+    "setup": "node scripts/setup-answers.mjs",
     "setup:local": "node scripts/setup-local.mjs",
     "test": "node --test tests/*.test.mjs",
     "check": "node scripts/check.mjs",

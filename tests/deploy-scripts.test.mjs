@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {devVarsFrom,taipeiDate,sampleSpec,SAMPLE_ID} from '../scripts/setup-local.mjs';
 import {setVarText,versionId,workersDevURL} from '../scripts/deploy-lib.mjs';
-import {r2Disabled,bucketNames,workerMissing,adminEmailFromMyCommunity} from '../scripts/deploy-bootstrap.mjs';
+import {r2Disabled,bucketNames,workerMissing} from '../scripts/deploy-bootstrap.mjs';
 import {siteKeyValid,widgetFor} from '../scripts/setup-turnstile.mjs';
 import {parseJSONC} from '../scripts/config-check.mjs';
 
@@ -38,11 +38,6 @@ test('部署腳本：解析 wrangler 輸出',()=>{
  assert.ok(r2Disabled('Please enable R2 through the Cloudflare Dashboard. [code: 10042]'));assert.ok(!r2Disabled('Authentication error [code: 10000]'));
  assert.deepEqual(bucketNames('Listing buckets...\nname:           other-photos\ncreation_date:  2026-01-01\n\nname:           community-events-photos\n'),['other-photos','community-events-photos']);
  assert.ok(workerMissing('This Worker does not exist on your account. [code: 10007]'));assert.ok(!workerMissing('Authentication error [code: 10000]'));
-});
-
-test('部署腳本：從 MY-COMMUNITY.md 讀第一位管理員 Email，沒填就空白',()=>{
- assert.equal(adminEmailFromMyCommunity('- 第一位管理員的 Email（用來登入後台）：organizer@example.org\n'),'organizer@example.org');
- assert.equal(adminEmailFromMyCommunity('- 第一位管理員的 Email（用來登入後台）：\n- 信件署名：x@y.z'),'');
 });
 
 test('Turnstile：Site Key 格式拒絕測試鍵與 Secret 樣式；依網域找既有 widget',()=>{

@@ -6,6 +6,7 @@
 // 兩把鑰匙都到位後重新部署，並檢查 CSP 允許 challenges.cloudflare.com。
 // 用法：npm run setup:turnstile [-- --plan] [-- --yes] [-- --site-key 0x4AAAA…] [-- --manual]
 import {fileURLToPath} from 'node:url';
+import {readAnswers} from './setup-answers.mjs';
 import {say,warn,die,readWrangler,setVar,wrangler,account,secretNames,versionId,confirm,ask,checkSite,log} from './deploy-lib.mjs';
 
 const API='https://api.cloudflare.com/client/v4';
@@ -53,12 +54,13 @@ async function main(){
  if(flags.has('--plan')){say('\n（--plan：只列出項目，沒有做任何變更）');return;}
  if(!await confirm('\n確定要執行嗎？',flags))die('已取消，沒有做任何變更。');
 
- let keys=flags.has('--manual')||arg('--site-key')?null:await viaAPI(acct,host,name);
+ const answered=readAnswers().turnstileSiteKey||'';
+ let keys=flags.has('--manual')||arg('--site-key')||answered?null:await viaAPI(acct,host,name);
  if(keys){
   const s=await wrangler(['secret','put','TURNSTILE_SECRET_KEY','--name',name],{input:keys.secret});
   if(s.code!==0)die('寫入 TURNSTILE_SECRET_KEY 失敗：\n'+s.err.slice(-400));
  }else{
-  let siteKey=arg('--site-key')||current;
+  let siteKey=arg('--site-key')||answered||current;
   if(!siteKey){
    say(`\n請到 Cloudflare 儀表板建立 widget：
   1. 打開 https://dash.cloudflare.com/?to=/:account/turnstile ，按「Add widget」
@@ -67,7 +69,7 @@ async function main(){
   4. Widget Mode：Managed，按「Create」
   5. 畫面會顯示 Site Key 和 Secret Key（先不要關掉）`);
    siteKey=await ask('\n請貼上 Site Key：');
-   if(!siteKey)die(`拿到 Site Key 後執行：npm run setup:turnstile -- --site-key <Site Key> --yes\n（Site Key 是公開值，可以直接貼給 AI 助理；Secret Key 不要貼）`,2);
+   if(!siteKey)die(`拿到 Site Key 後存進問卷（npm run setup -- set '{"turnstileSiteKey":"<Site Key>"}'），再執行：npm run setup:turnstile -- --yes\n（Site Key 是公開值，可以直接貼給 AI 助理；Secret Key 不要貼）`,2);
   }
   if(!siteKeyValid(siteKey))die('Site Key 格式不對（應為 0x4AAAA… 這種格式，不是 Secret Key，也不能是測試用的 1x0000… 鑰匙）。');
   keys={sitekey:siteKey};
