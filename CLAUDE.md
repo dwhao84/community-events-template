@@ -6,7 +6,7 @@
 
 ## 要把模板設定成自己的社區
 
-使用 `community-setup` skill（`.claude/skills/community-setup/SKILL.md`），它會讀取 `MY-COMMUNITY.md` 並一步步完成設定與部署。
+使用 `community-setup` skill（`.claude/skills/community-setup/SKILL.md`），它會讀取 `MY-COMMUNITY.md` 並一步步完成設定與部署。第一次上架、需要從頭帶著做時，使用 `first-launch` skill（`.claude/skills/first-launch/SKILL.md`）：先確認不會蓋到既有網站，用問答填好 `MY-COMMUNITY.md`，再依 community-setup 逐關完成，進度記在 `.local/handoff-status.md`，中斷後可以接著做。
 
 ## 常用指令
 

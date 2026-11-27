@@ -179,6 +179,12 @@
 
 AI 會依 [`.agents/skills/community-setup/SKILL.md`](.agents/skills/community-setup/SKILL.md) 的步驟操作：填設定、在你的電腦上預覽、部署、設定後台登入，最後帶你完成開站檢查。每次要部署或建立雲端資源之前，AI 都會先問你。
 
+第一次架站、`MY-COMMUNITY.md` 還沒填也沒關係，可以直接說：
+
+> 第一次上架，用 community-setup 帶我設定。
+
+AI 會依 [`.agents/skills/first-launch/SKILL.md`](.agents/skills/first-launch/SKILL.md) 帶你：先確認不會蓋到已經存在的網站，再用問答幫你填好 `MY-COMMUNITY.md`，然後一關一關完成。中途中斷也沒關係，下次說「接著上次的上架進度」就會從停下的地方繼續。
+
 - Claude Code 讀 `CLAUDE.md`，Codex 讀 `AGENTS.md`，Gemini CLI 讀 `GEMINI.md`，三者內容相同。
 - skill 同時放在 `.claude/skills/` 與 `.agents/skills/`。
 
